@@ -1,0 +1,228 @@
+name: "Deploy Mortar Application"
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        type: string
+        description: "앱 이름"
+        required: true
+      app-path:
+        type: string
+        description: "앱 기준 디렉토리"
+        required: false
+        default: "."
+      version:
+        description: "릴리즈 Tag (semver, eg. X.X.X)"
+        required: false
+        type: string
+      release-note:
+        description: "릴리즈 기록"
+        default: "특이사항 없음"
+        required: false
+        type: string
+      auto-release:
+        type: boolean
+        description: "Release 생성 여부"
+        default: true
+        required: false
+      nexus-url:
+        type: string
+        description: "Nexus URL where all the packages are published"
+        required: false
+        default: "http://nexus.dailyhou.se"
+      create-ecr-repo:
+        type: boolean
+        description: "creates ECR repository if it is not existed"
+        required: false
+        default: false
+      gradlew-path:
+        type: string
+        description: "gradlew가 있는 path"
+        required: false
+        default: "."
+      sonar-host-url:
+        type: string
+        description: "host url of sonarqube"
+        required: false
+        default: "https://sonarqube.co-workerhou.se"
+
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        description: "An AWS access key ID for deploying image into ECR"
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        description: "An AWS secret access key for deploying image into ECR"
+        required: true
+      GO_REPO_S3_AWS_ACCESS_KEY_ID:
+        description: "An AWS secret access key ID for deploying go package into S3"
+        required: false
+      GO_REPO_S3_AWS_SECRET_ACCESS_KEY:
+        description: "An AWS secret secret access key for deploying go package into S3"
+        required: false
+      NEXUS_DEPLOY_USERPASS:
+        description: "Pair of Username and Password for accessing nexus"
+        required: true
+      OPSMONSTER_AUTH_TOKEN_V2:
+        required: true
+      OPSMONSTER_BASE_URL_V2:
+        required: true
+      SONAR_TOKEN:
+        required: true
+
+jobs:
+  validate-and-check:
+    name: Validate
+    uses: './.github/workflows/reusable-check-kotlin.yml'
+    with:
+      app-name: ${{ inputs.app-name }}
+      app-path: ${{ inputs.app-path }}
+      version: ${{ inputs.version }}
+      gradlew-path: ${{ inputs.gradlew-path }}
+      sonar-host-url: ${{ inputs.sonar-host-url }}
+    secrets: inherit
+
+  build-and-push-nonprod:
+    environment: dev
+    name: Build - NonProd
+    needs: [validate-and-check]
+    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    outputs:
+      image_tag: ${{ steps.mortar-deploy.outputs.app-version }}
+    env:
+      GRADLE_HOME: /runner/.gradle
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Mortar Deploy
+        id: mortar-deploy
+        uses: bucketplace/mortar-deploy-action@v1
+        with:
+          prod: false
+          aws-region: ap-northeast-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          go-repo-s3-aws-access-id: ${{ secrets.GO_REPO_S3_AWS_ACCESS_KEY_ID }}
+          go-repo-s3-aws-secret-key: ${{ secrets.GO_REPO_S3_AWS_SECRET_ACCESS_KEY }}
+          nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
+          nexus-url: ${{ inputs.nexus-url }}
+          override-version: ${{ needs.validate-and-check.outputs.next-version }}
+          config: ${{ inputs.app-path }}
+          create-ecr-repo: ${{ inputs.create-ecr-repo }}
+      - if: failure()
+        name: Report failure
+        run: |
+          echo "Mortar 실행이 실패하였습니다." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+  
+  cd-trigger-dev:
+    environment: dev
+    name: Deploy - Dev
+    runs-on: [self-hosted, Linux, X64, no-cache]
+    needs: [build-and-push-nonprod]
+    steps:
+      - name: CD trigger
+        uses: bucketplace/cd-trigger-action@v2.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ inputs.app-name }}
+          profile: dev
+          image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+          version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+
+  cd-trigger-testing:
+    environment: testing
+    name: Deploy - Testing
+    runs-on: [self-hosted, Linux, X64, no-cache]
+    needs: [build-and-push-nonprod]
+    steps:
+      - name: CD trigger
+        uses: bucketplace/cd-trigger-action@v2.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ inputs.app-name }}
+          profile: testing
+          image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+          version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+  
+  cd-trigger-staging:
+    environment: staging
+    name: Deploy - Staging
+    runs-on: [self-hosted, Linux, X64, no-cache]
+    needs: [build-and-push-nonprod]
+    steps:
+      - name: CD trigger
+        uses: bucketplace/cd-trigger-action@v2.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ inputs.app-name }}
+          profile: staging
+          image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+          version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+
+  build-and-push-prod:
+    environment: prod
+    name: Build - Prod
+    needs: [validate-and-check, cd-trigger-testing]
+    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    outputs:
+      image_tag: ${{ steps.mortar-deploy.outputs.app-version }}
+    env:
+      GRADLE_HOME: /runner/.gradle
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+      - name: Mortar Deploy
+        id: mortar-deploy
+        uses: bucketplace/mortar-deploy-action@v1
+        with:
+          prod: true
+          aws-region: ap-northeast-2
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          go-repo-s3-aws-access-id: ${{ secrets.GO_REPO_S3_AWS_ACCESS_KEY_ID }}
+          go-repo-s3-aws-secret-key: ${{ secrets.GO_REPO_S3_AWS_SECRET_ACCESS_KEY }}
+          nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
+          nexus-url: ${{ inputs.nexus-url }}
+          override-version: ${{ needs.validate-and-check.outputs.next-version }}
+          config: ${{ inputs.app-path }}
+          create-ecr-repo: ${{ inputs.create-ecr-repo }}
+      - if: failure()
+        name: Report failure
+        run: |
+          echo "Mortar 실행이 실패하였습니다." >> "$GITHUB_STEP_SUMMARY"
+          exit 1
+  
+  cd-trigger-prod:
+    environment: prod
+    name: Deploy - Prod
+    runs-on: [self-hosted, Linux, X64, no-cache]
+    needs: [build-and-push-prod]
+    steps:
+      - name: CD trigger
+        uses: bucketplace/cd-trigger-action@v2.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ inputs.app-name }}
+          profile: prod
+          image-tag: ${{  steps.build-and-push-prod.outputs.image-tag  }}
+          version: ${{  steps.build-and-push-prod.outputs.image-tag  }}
+  
+  github-release:
+    if: inputs.auto-release
+    name: Release
+    needs: [validate-and-check, build-and-push-prod]
+    uses: './.github/workflows/reusable-github-release.yml'
+    with:
+      app-name: ${{ inputs.app-name }}
+      version: ${{ needs.validate-and-check.outputs.next-version }}
+      release-note: ${{ inputs.release-note }}
+    secrets: inherit

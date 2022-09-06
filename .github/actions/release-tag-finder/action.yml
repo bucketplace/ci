@@ -1,0 +1,64 @@
+name: "Release Tag Finder"
+description: "finds release tags and generate next tag with app name"
+inputs:
+  app-name:
+    description: "앱 기준 디렉토리"
+    required: true
+  bump:
+    description: "next tag에서 SemVer 어떤 부분(major, minor, patch)를 올릴지 결정"
+    default: "patch"
+    required: false
+  github-token:
+    description: "github token"
+    required: true
+outputs:
+  next-tag:
+    description: "다음 Tag 명 (eg. sample-service-v1.0.1)"
+    value: ${{ steps.generate-next-tag.outputs.tag }}
+  current-tag:
+    description: "현재 Tag 명 (eg. sample-service-v1.0.0)"
+    value: ${{ steps.current-tag.outputs.tag }}
+  next-version:
+    description: "다음 Version (eg. 1.0.1)"
+    value: ${{ steps.generate-next-tag.outputs.version }}
+  current-version:
+    description: "현재 Version (eg. 1.0.0)"
+    value: ${{ steps.current-tag.outputs.version }}
+  
+runs:
+  using: composite
+  steps:
+    - name: "Find Latest Tags for new Version"
+      id: find-latest-tag  # The step ID to refer to later.
+      uses: oprypin/find-latest-tag@v1
+      with:
+        repository: ${{ github.repository }}
+        releases-only: true
+        prefix: "${{ inputs.app-name }}-v"
+    - name: Get Current Tag and Version
+      id: current-tag
+      run: |
+        LATEST_TAG="${{ steps.find-latest-tag.outputs.tag }}"
+        LATEST_VERSION="${LATEST_TAG#${{ inputs.app-name }}-v}"
+        echo "::set-output name=tag::${LATEST_TAG}"
+        echo "::set-output name=version::${LATEST_VERSION}"
+      shell: bash
+    - name: Get Next SemVer
+      id: next-semver
+      uses: "WyriHaximus/github-action-next-semvers@v1"
+      with:
+        version: ${{ steps.current-tag.outputs.version }}
+    - name: Generate Next Tag and Version
+      id: generate-next-tag
+      run: |
+        GEN_VERSION="${{ steps.next-semver.outputs.patch }}"
+        if [[ "${{ inputs.bump }}" == "minor" ]]; then
+          GEN_VERSION="${{ steps.next-semver.outputs.minor }}"
+        fi
+        if [[ "${{ inputs.bump }}" == "major" ]]; then
+          GEN_VERSION="${{ steps.next-semver.outputs.major }}"
+        fi
+        GEN_TAG="${{ inputs.app-name }}-v${GEN_VERSION}"
+        echo "::set-output name=tag::${GEN_TAG}"
+        echo "::set-output name=version::${GEN_VERSION}"
+      shell: bash

@@ -1,0 +1,39 @@
+name: "Create Release"
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: "앱 이름"
+        required: true
+        type: string
+      version:
+        required: true
+        description:  "릴리즈 Tag 버전 (semver)"
+        type: string
+      release-note:
+        description: "릴리즈 기록"
+        default: "특이사항 없음"
+        required: false
+        type: string
+
+jobs:
+  github-release:
+    name: Create
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v2
+    - name: Get Date
+      id: get-date
+      run: echo "::set-output name=value::$(date +'%y%m%d')"
+      shell: bash
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      with:
+        generate_release_notes: true
+        body: |
+          ## Release Note
+          ${{ inputs.release-note }}
+        name: ${{ inputs.app-name }}-v${{ inputs.version }}@${{ steps.get-date.outputs.value }}
+        tag_name: ${{ inputs.app-name }}-v${{ inputs.version }}
