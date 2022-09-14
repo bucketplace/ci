@@ -52,6 +52,8 @@ jobs:
         shell: bash
       - name: Check out code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - if: ${{ !inputs.prod }}
         name: Setup Reviewdog
         uses: reviewdog/action-setup@v1
@@ -60,7 +62,7 @@ jobs:
       - name: Get Main SHA
         id: get-sha
         run: |
-          echo "::set-output name=sha::$(git rev-parse refs/remotes/origin/HEAD)"
+          echo "::set-output name=sha::$(git rev-parse refs/heads/${{ github.event.repository.default_branch }} --short=7)"
       - name: Check Conditions
         id: check-conditions
         run: |
@@ -74,7 +76,7 @@ jobs:
           fi
           SONAR_VERSION="${{ steps.get-sha.outputs.sha }}"
           if [[ "${{ inputs.prod }}" != "true" ]]; then
-            SONAR_VERSION="${SONAR_VERSION}-candidate"
+            SONAR_VERSION="${SONAR_VERSION}-pr"
           fi
 
           echo "::set-output name=reviewdog-reporter::${RD_REPORT}"
