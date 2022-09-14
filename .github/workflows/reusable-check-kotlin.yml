@@ -71,7 +71,7 @@ jobs:
           reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
       - name: Get Current Tag
         id: get-tag
-        uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@main
+        uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@v1
         with:
           app-name: ${{ inputs.app-name }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
