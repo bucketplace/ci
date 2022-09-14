@@ -52,6 +52,8 @@ jobs:
         shell: bash
       - name: Check out code
         uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - if: ${{ !inputs.prod }}
         name: Setup Reviewdog
         uses: reviewdog/action-setup@v1
