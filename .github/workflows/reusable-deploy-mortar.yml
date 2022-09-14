@@ -93,7 +93,7 @@ jobs:
       GRADLE_USER_HOME: /runner/.gradle
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Get Tag
         id: get-tag
         uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@v1
@@ -189,7 +189,7 @@ jobs:
       GRADLE_USER_HOME: /runner/.gradle
     steps:
       - name: Check out code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
       - name: Get Tag
         id: get-tag
         uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@v1
