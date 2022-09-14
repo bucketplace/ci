@@ -90,7 +90,7 @@ jobs:
     outputs:
       image_tag: ${{ steps.mortar-deploy.outputs.app-version }}
     env:
-      GRADLE_HOME: /runner/.gradle
+      GRADLE_USER_HOME: /runner/.gradle
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -186,7 +186,7 @@ jobs:
     outputs:
       image_tag: ${{ steps.mortar-deploy.outputs.app-version }}
     env:
-      GRADLE_HOME: /runner/.gradle
+      GRADLE_USER_HOME: /runner/.gradle
     steps:
       - name: Check out code
         uses: actions/checkout@v2
