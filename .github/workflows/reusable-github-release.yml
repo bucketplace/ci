@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       version:
-        required: true
+        required: false
         description:  "릴리즈 Tag 버전 (semver)"
         type: string
       release-note:
@@ -24,6 +24,12 @@ jobs:
     steps:
     - name: Check out code
       uses: actions/checkout@v2
+    - name: Get Tag
+      id: get-tag
+      uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@main
+      with:
+        app-name: ${{ inputs.app-name }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
     - name: Get Date
       id: get-date
       run: echo "::set-output name=value::$(date +'%y%m%d')"
@@ -35,5 +41,5 @@ jobs:
         body: |
           ## Release Note
           ${{ inputs.release-note }}
-        name: ${{ inputs.app-name }}-v${{ inputs.version }}@${{ steps.get-date.outputs.value }}
-        tag_name: ${{ inputs.app-name }}-v${{ inputs.version }}
+        name: ${{ steps.get-tag.outputs.next-tag }}@${{ steps.get-date.outputs.value }}
+        tag_name: ${{ steps.get-tag.outputs.next-tag }}

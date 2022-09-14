@@ -27,19 +27,11 @@ on:
         description: "host url of sonarqube"
         required: false
         default: "https://sonarqube.co-workerhou.se"
-    outputs:
-      next-tag:
-        description: "다음 Tag 명 (eg. sample-service-v1.0.1)"
-        value: ${{ jobs.check-and-report.outputs.next-tag }}
-      current-tag:
-        description: "현재 Tag 명 (eg. sample-service-v1.0.0)"
-        value: ${{ jobs.check-and-report.outputs.current-tag }}
-      next-version:
-        description: "다음 Version (eg. 1.0.1)"
-        value: ${{ jobs.check-and-report.outputs.next-version }}
-      current-version:
-        description: "현재 Version (eg. 1.0.0)"
-        value: ${{ jobs.check-and-report.outputs.current-version }}
+      prod:
+        type: boolean
+        description: "true if prod"
+        default: false
+        required: false
     secrets:
       SONAR_TOKEN:
         required: true
@@ -47,11 +39,6 @@ jobs:
   check-and-report:
     name: Lint, Test And Reports
     runs-on: [self-hosted, Linux, X64, mortar-runner]
-    outputs:
-      next-tag: ${{ steps.get-tag.outputs.next-tag }}
-      current-tag: ${{ steps.get-tag.outputs.current-tag }}
-      next-version: ${{ steps.get-tag.outputs.next-version }}
-      current-version: ${{ steps.get-tag.outputs.current-version }}
     steps:
       - if: ${{ inputs.version != ''}}
         name: Check Version
@@ -65,16 +52,15 @@ jobs:
         shell: bash
       - name: Check out code
         uses: actions/checkout@v2
-      - name: Setup Reviewdog
+      - if: ${{ !inputs.prod }}
+        name: Setup Reviewdog
         uses: reviewdog/action-setup@v1
         with:
           reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
-      - name: Get Current Tag
-        id: get-tag
-        uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@main
-        with:
-          app-name: ${{ inputs.app-name }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Main SHA
+        id: get-sha
+        run: |
+          echo "::set-output name=sha::$(git rev-parse refs/remotes/origin/HEAD)"
       - name: Check Conditions
         id: check-conditions
         run: |
@@ -84,16 +70,17 @@ jobs:
             RD_REPORT="github-check"
           else
             RD_REPORT="local"
-            RD_DIFF="-diff=\"git diff ${{ steps.get-tag.outputs.current-tag }} ${{ inputs.app-path }}"
+            RD_DIFF="-diff=\"git diff ${{ steps.get-sha.outputs.sha }} ${{ inputs.app-path }}"
           fi
-          VERSION="${{ inputs.version }}"
-          if [[ -z "${{ inputs.version }}" ]]; then
-            VERSION="${{ steps.get-tag.outputs.next-version }}"
+          SONAR_VERSION="${{ teps.get-sha.outputs.sha }}"
+          if [[ "${{ inputs.prod }}" != "true" ]]; then
+            SONAR_VERSION="${SONAR_VERSION}-candidate"
           fi
-          
+
           echo "::set-output name=reviewdog-reporter::${RD_REPORT}"
           echo "::set-output name=reviewdog-diff::${RD_DIFF}"
-          echo "::set-output name=version::${VERSION}"
+          echo "::set-output name=sonar_version::${SONAR_VERSION}"
+          echo "::set-output name=quality-gate::${{!inputs.prod}}"
         shell: bash
       - name: Report Summary
         run: |
@@ -104,7 +91,7 @@ jobs:
           | App Name | ${{ inputs.app-name }} |
           | App Path | ${{ inputs.app-path }} |
           | Gradle Path | ${{ inputs.gradlew-path}}/gradlew |
-          | Version | ${{ steps.check-conditions.outputs.version }} |
+          | Sonar Version | ${{ steps.check-conditions.outputs.sonar_version }} |
           | Deployed By | @${{ github.actor }} |
 
           EOF
@@ -130,8 +117,8 @@ jobs:
           --project-dir=${{ inputs.app-path }} \
           --info \
           --continue \
-          -Dsonar.qualitygate.wait=true \
-          -Dsonar.projectVersion='${{ steps.check-conditions.outputs.version }}' \
+          -Dsonar.qualitygate.wait=${{ steps.check-conditions.outputs.quality-gate }} \
+          -Dsonar.projectVersion='${{ steps.check-conditions.outputs.sonar_version }}' \
           -Dsonar.projectName="${{ inputs.app-name }}"
         shell: bash
       - if: failure()
@@ -140,7 +127,7 @@ jobs:
         with:
           name: Failure Reports
           path: ${{ inputs.app-path }}/build/reports/
-      - if: always() && github.event_name != 'workflow_dispatch'
+      - if: always() && github.event_name != 'workflow_dispatch' && !inputs.prod
         name: Add coverage to PR
         uses: madrapps/jacoco-report@v1.3
         with:
@@ -148,7 +135,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 70
           min-coverage-changed-files: 70
-      - if: always() 
+      - if: always() && !inputs.prod
         name: Run reviewdog
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}

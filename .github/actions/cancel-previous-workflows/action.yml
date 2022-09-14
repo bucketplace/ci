@@ -1,0 +1,29 @@
+name: "Cancel Previous Workflows"
+description: "cancel previous workflows with same id"
+inputs:
+  run-id:
+    description: "run id of current workflows"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup gh CLI
+      uses: ksivamuthu/gh-cli-action@v1
+    - name: Get current workflow run information
+      id: current-run
+      run: |
+        DATA=$(gh run view ${{ github.run_id }} --json workflowDatabaseId,createdAt)
+        WORKFLOW_ID=$(jq .workflowDatabaseId "${DATA}")
+        CREATED_AT=$(jq '.createdAt|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime' "${DATA}")
+        CANDIDATES=$(gh run list --json status,createdAt,databaseId,workflowDatabaseId -L 100 --jq ".[] | \
+          select( \
+            (.status | in(["queued", "in_progress", "waiting"])) and \
+            .databaseId != ${{github.run_id}} and \
+            .workflowDatabaseId == ${WORKFLOW_ID} and \
+            (.createdAt | strptime(\"%Y-%m-%dT%H:%M:%SZ\")|mktime) > ${CREATED_AT} \
+          ) | .databaseId ')
+        echo $CANDIDATES | while read cand; do
+          gh run cancel $cand
+        done
+      shell: bash

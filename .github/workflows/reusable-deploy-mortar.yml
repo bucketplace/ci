@@ -83,7 +83,6 @@ jobs:
     secrets: inherit
 
   build-and-push-nonprod:
-    environment: dev
     name: Build - NonProd
     needs: [validate-and-check]
     runs-on: [self-hosted, Linux, X64, mortar-runner]
@@ -94,11 +93,16 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
+      - name: Get Tag
+        id: get-tag
+        uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@v1
+        with:
+          app-name: ${{ inputs.app-name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1
         with:
-          prod: false
           aws-region: ap-northeast-2
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -106,7 +110,7 @@ jobs:
           go-repo-s3-aws-secret-key: ${{ secrets.GO_REPO_S3_AWS_SECRET_ACCESS_KEY }}
           nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
           nexus-url: ${{ inputs.nexus-url }}
-          override-version: ${{ needs.validate-and-check.outputs.next-version }}
+          override-version: ${{ steps.get-tag.outputs.next-version }}
           config: ${{ inputs.app-path }}
           create-ecr-repo: ${{ inputs.create-ecr-repo }}
       - if: failure()
@@ -115,7 +119,7 @@ jobs:
           echo "Mortar 실행이 실패하였습니다." >> "$GITHUB_STEP_SUMMARY"
           exit 1
   
-  cd-trigger-dev:
+  deploy-dev:
     environment: dev
     name: Deploy - Dev
     runs-on: [self-hosted, Linux, X64, no-cache]
@@ -132,8 +136,10 @@ jobs:
           image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
           version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
 
-  cd-trigger-testing:
+  deploy-testing:
     environment: testing
+    concurrency: 
+      group: ci-${{ inputs.app-name }}
     name: Deploy - Testing
     runs-on: [self-hosted, Linux, X64, no-cache]
     needs: [build-and-push-nonprod]
@@ -148,8 +154,13 @@ jobs:
           profile: testing
           image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
           version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+      - name: Cancel previous workflows run
+        uses: bucketplace/github-action-ci-workflows/.github/actions/cancel-previous-workflows@v1
+        with:
+          app-name: ${{ inputs.app-name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
   
-  cd-trigger-staging:
+  deploy-staging:
     environment: staging
     name: Deploy - Staging
     runs-on: [self-hosted, Linux, X64, no-cache]
@@ -169,7 +180,7 @@ jobs:
   build-and-push-prod:
     environment: prod
     name: Build - Prod
-    needs: [validate-and-check, cd-trigger-testing]
+    needs: [deploy-testing]
     runs-on: [self-hosted, Linux, X64, mortar-runner]
     outputs:
       image_tag: ${{ steps.mortar-deploy.outputs.app-version }}
@@ -178,6 +189,12 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v2
+      - name: Get Tag
+        id: get-tag
+        uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@v1
+        with:
+          app-name: ${{ inputs.app-name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1
@@ -190,7 +207,7 @@ jobs:
           go-repo-s3-aws-secret-key: ${{ secrets.GO_REPO_S3_AWS_SECRET_ACCESS_KEY }}
           nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
           nexus-url: ${{ inputs.nexus-url }}
-          override-version: ${{ needs.validate-and-check.outputs.next-version }}
+          override-version: ${{ steps.get-tag.outputs.next-version }}
           config: ${{ inputs.app-path }}
           create-ecr-repo: ${{ inputs.create-ecr-repo }}
       - if: failure()
@@ -199,7 +216,7 @@ jobs:
           echo "Mortar 실행이 실패하였습니다." >> "$GITHUB_STEP_SUMMARY"
           exit 1
   
-  cd-trigger-prod:
+  deploy-prod:
     environment: prod
     name: Deploy - Prod
     runs-on: [self-hosted, Linux, X64, no-cache]
@@ -219,10 +236,9 @@ jobs:
   github-release:
     if: inputs.auto-release
     name: Release
-    needs: [validate-and-check, build-and-push-prod]
+    needs: [build-and-push-prod]
     uses: './.github/workflows/reusable-github-release.yml'
     with:
       app-name: ${{ inputs.app-name }}
-      version: ${{ needs.validate-and-check.outputs.next-version }}
       release-note: ${{ inputs.release-note }}
     secrets: inherit
