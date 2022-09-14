@@ -80,6 +80,7 @@ jobs:
       version: ${{ inputs.version }}
       gradlew-path: ${{ inputs.gradlew-path }}
       sonar-host-url: ${{ inputs.sonar-host-url }}
+      prod: true
     secrets: inherit
 
   build-and-push-nonprod:
@@ -133,8 +134,8 @@ jobs:
         with:
           application: ${{ inputs.app-name }}
           profile: dev
-          image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
-          version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+          image-tag: ${{ needs.build-and-push-nonprod.outputs.image-tag  }}
+          version: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
 
   deploy-testing:
     environment: testing
@@ -152,8 +153,8 @@ jobs:
         with:
           application: ${{ inputs.app-name }}
           profile: testing
-          image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
-          version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+          image-tag: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
+          version: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
       - name: Cancel previous workflows run
         uses: bucketplace/github-action-ci-workflows/.github/actions/cancel-previous-workflows@v1
         with:
@@ -174,8 +175,8 @@ jobs:
         with:
           application: ${{ inputs.app-name }}
           profile: staging
-          image-tag: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
-          version: ${{  steps.build-and-push-nonprod.outputs.image-tag  }}
+          image-tag: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
+          version: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
 
   build-and-push-prod:
     environment: prod
@@ -230,8 +231,8 @@ jobs:
         with:
           application: ${{ inputs.app-name }}
           profile: prod
-          image-tag: ${{  steps.build-and-push-prod.outputs.image-tag  }}
-          version: ${{  steps.build-and-push-prod.outputs.image-tag  }}
+          image-tag: ${{ needs.build-and-push-prod.outputs.image-tag  }}
+          version: ${{ needs.build-and-push-prod.outputs.image-tag  }}
   
   github-release:
     if: inputs.auto-release
