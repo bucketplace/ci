@@ -72,7 +72,7 @@ jobs:
             RD_REPORT="local"
             RD_DIFF="-diff=\"git diff ${{ steps.get-sha.outputs.sha }} ${{ inputs.app-path }}"
           fi
-          SONAR_VERSION="${{ teps.get-sha.outputs.sha }}"
+          SONAR_VERSION="${{ steps.get-sha.outputs.sha }}"
           if [[ "${{ inputs.prod }}" != "true" ]]; then
             SONAR_VERSION="${SONAR_VERSION}-candidate"
           fi
