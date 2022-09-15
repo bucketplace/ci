@@ -46,7 +46,6 @@ on:
         description: "host url of sonarqube"
         required: false
         default: "https://sonarqube.co-workerhou.se"
-
     secrets:
       AWS_ACCESS_KEY_ID:
         description: "An AWS access key ID for deploying image into ECR"
@@ -71,21 +70,18 @@ on:
         required: true
 
 jobs:
-  validate-and-check:
+  submit-sonarqube:
     name: Validate
-    uses: './.github/workflows/reusable-check-kotlin.yml'
+    uses: './.github/workflows/reusable-submit-sonarqube-analysis-kotlin.yml'
     with:
       app-name: ${{ inputs.app-name }}
       app-path: ${{ inputs.app-path }}
-      version: ${{ inputs.version }}
       gradlew-path: ${{ inputs.gradlew-path }}
       sonar-host-url: ${{ inputs.sonar-host-url }}
-      prod: true
     secrets: inherit
 
   build-and-push-nonprod:
     name: Build - NonProd
-    needs: [validate-and-check]
     runs-on: [self-hosted, Linux, X64, mortar-runner]
     outputs:
       image-tag: ${{ steps.mortar-deploy.outputs.app-version }}
@@ -140,7 +136,7 @@ jobs:
   deploy-testing:
     environment: testing
     concurrency: 
-      group: ci-${{ inputs.app-name }}
+      group: ci-testing-${{ inputs.app-name }}
     name: Deploy - Testing
     runs-on: [self-hosted, Linux, X64, no-cache]
     needs: [build-and-push-nonprod]
