@@ -8,8 +8,8 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Setup gh CLI
-      uses: ksivamuthu/gh-cli-action@v1
+    - name: Install GH CLI
+      uses: dev-hanz-ops/install-gh-cli-action
     - name: Get current workflow run information
       id: current-run
       run: |
