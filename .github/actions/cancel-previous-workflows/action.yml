@@ -1,0 +1,48 @@
+name: "Cancel Previous Workflows"
+description: "cancel previous workflows with same id"
+inputs:
+  run-id:
+    description: "run id of current workflows"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Get current workflow run information
+      id: current-run
+      env:
+        GH_VERSION: "2.15.0"
+      run: |
+        gh --help 2&>1 >> /dev/null
+        if [[ $? -ne 0 ]]; then
+          mkdir _temp-gh
+          OA="${{ runner.arch }}"
+          if [[ $OA == "X64" ]]; then 
+            GH_ARCH=amd64
+          elif [[ $OA == "ARM64" ]]; then
+            GH_ARCH=arm64
+          elif [[ $OA == "X86" ]]; then
+            GH_ARCH=386
+          elif [[ $OA == "ARM" ]]; then
+            GH_ARCH=armv6
+          fi
+          curl -Lsf https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_${{ runner.os }}_${GH_ARCH}.tar.gz | tar -xz --strip-components 1 -C temp
+          chmod u+x _temp-gh/bin/gh
+          alias gh=_temp-gh/bin/gh
+        fi
+
+        DATA=$(gh run view ${{ github.run_id }} --json workflowDatabaseId,createdAt)
+        WORKFLOW_ID=$(jq .workflowDatabaseId "${DATA}")
+        CREATED_AT=$(jq '.createdAt|strptime("%Y-%m-%dT%H:%M:%SZ")|mktime' "${DATA}")
+        CANDIDATES=$(gh run list --json status,createdAt,databaseId,workflowDatabaseId -L 100 --jq ".[] | \
+          select( \
+            (.status | in(["queued", "in_progress", "waiting"])) and \
+            .databaseId != ${{github.run_id}} and \
+            .workflowDatabaseId == ${WORKFLOW_ID} and \
+            (.createdAt | strptime(\"%Y-%m-%dT%H:%M:%SZ\")|mktime) > ${CREATED_AT} \
+          ) | .databaseId ')
+        echo $CANDIDATES | while read cand; do
+          gh run cancel $cand
+        done
+        rm -rf _temp-gh
+      shell: bash

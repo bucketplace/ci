@@ -1,0 +1,73 @@
+name: "Check Kotlin"
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: "앱 이름"
+        required: true
+        type: string
+      app-path:
+        type: string
+        description: "앱 기준 디렉토리"
+        required: false
+        default: "."
+      gradlew-path:
+        type: string
+        description: "gradlew가 있는 path"
+        required: false
+        default: "."
+      sonar-host-url:
+        type: string
+        description: "host url of sonarqube"
+        required: false
+        default: "https://sonarqube.co-workerhou.se"
+    secrets:
+      SONAR_TOKEN:
+        required: true
+jobs:   
+  submit-sonarqube:
+    name: Submit Sonarqube
+    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    steps:
+      - name: Checkout Code for Get Main SHA
+        uses: actions/checkout@v3
+        with:
+          path: ${{ github.workspace }}/get-sha-temp
+          ref: ${{ github.event.repository.default_branch }}
+      - name: Get Main SHA
+        id: get-sha
+        run: |
+          cd ${{ github.workspace }}/get-sha-temp
+          SHA=$(git rev-parse HEAD)
+          SHORT_SHA=$(git rev-parse --short=10 HEAD)
+          rm -rf ${{ github.workspace }}/get-sha-temp
+          echo "::set-output name=short-sha::${SHORT_SHA}"
+          echo "::set-output name=sha::${SHA}"
+
+          echo "main sha: ${SHA}, current sha: ${{github.sha}}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Run gradle for sonarqube
+        if: ${{ steps.get-sha.outputs.sha == github.sha }} # Do not run if it is prod and not a head sha
+        id: gradle-run
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ inputs.sonar-host-url }}
+          GRADLE_USER_HOME: /runner/.gradle
+        run: |
+          ${{ inputs.gradlew-path }}/gradlew sonarqube \
+          --project-dir=${{ inputs.app-path }} \
+          --info \
+          --continue \
+          -Dsonar.qualitygate.wait=false \
+          -Dsonar.projectVersion='${{ steps.get-sha.outputs.short-sha }}' \
+          -Dsonar.projectName="${{ inputs.app-name }}"
+        shell: bash
+      - if: failure()
+        name: Upload Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: Failure Reports
+          path: ${{ inputs.app-path }}/build/reports/
+  
