@@ -45,7 +45,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Run gradle for sonarqube
-        if: ${{ steps.get-sha.outputs.sha != github.sha) }} # Do not run if it is prod and not a head sha
+        if: ${{ steps.get-sha.outputs.sha != github.sha }} # Do not run if it is prod and not a head sha
         id: gradle-run
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
