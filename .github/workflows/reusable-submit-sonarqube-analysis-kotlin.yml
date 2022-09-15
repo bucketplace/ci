@@ -39,13 +39,17 @@ jobs:
         id: get-sha
         run: |
           cd ${{ github.workspace }}/get-sha-temp
-          echo "::set-output name=short-sha::$(git rev-parse --short=10 HEAD)"
-          echo "::set-output name=sha::$(git rev-parse HEAD)"
+          SHA=$(git rev-parse HEAD)
+          SHORT_SHA=$(git rev-parse --short=10 HEAD)
           rm -rf ${{ github.workspace }}/get-sha-temp
+          echo "::set-output name=short-sha::${SHORT_SHA}"
+          echo "::set-output name=sha::${SHA}"
+
+          echo "main sha: ${SHA}, current sha: ${{github.sha}}" >> "$GITHUB_STEP_SUMMARY"
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Run gradle for sonarqube
-        if: ${{ steps.get-sha.outputs.sha != github.sha }} # Do not run if it is prod and not a head sha
+        if: ${{ steps.get-sha.outputs.sha == github.sha }} # Do not run if it is prod and not a head sha
         id: gradle-run
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

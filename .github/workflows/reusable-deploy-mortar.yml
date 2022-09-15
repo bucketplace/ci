@@ -71,7 +71,7 @@ on:
 
 jobs:
   submit-sonarqube:
-    name: Validate
+    name: ""
     uses: './.github/workflows/reusable-submit-sonarqube-analysis-kotlin.yml'
     with:
       app-name: ${{ inputs.app-name }}
