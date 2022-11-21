@@ -9,7 +9,7 @@ on:
         type: string
       version:
         required: false
-        description:  "릴리즈 Tag 버전 (semver)"
+        description: "릴리즈 Tag 버전 (semver)"
         type: string
       release-note:
         description: "릴리즈 기록"
@@ -22,24 +22,24 @@ jobs:
     name: Create
     runs-on: ubuntu-latest
     steps:
-    - name: Check out code
-      uses: actions/checkout@v3
-    - name: Get Tag
-      id: get-tag
-      uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@main
-      with:
-        app-name: ${{ inputs.app-name }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-    - name: Get Date
-      id: get-date
-      run: echo "::set-output name=value::$(date +'%y%m%d')"
-      shell: bash
-    - name: Release
-      uses: softprops/action-gh-release@v1
-      with:
-        generate_release_notes: true
-        body: |
-          ## Release Note
-          ${{ inputs.release-note }}
-        name: ${{ steps.get-tag.outputs.next-tag }}@${{ steps.get-date.outputs.value }}
-        tag_name: ${{ steps.get-tag.outputs.next-tag }}
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Get Tag
+        id: get-tag
+        uses: bucketplace/github-action-ci-workflows/.github/actions/release-tag-finder@main
+        with:
+          app-name: ${{ inputs.app-name }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get Date
+        id: get-date
+        run: echo "value=$(date +'%y%m%d')" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          body: |
+            ## Release Note
+            ${{ inputs.release-note }}
+          name: ${{ steps.get-tag.outputs.next-tag }}@${{ steps.get-date.outputs.value }}
+          tag_name: ${{ steps.get-tag.outputs.next-tag }}

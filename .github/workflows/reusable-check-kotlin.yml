@@ -25,8 +25,10 @@ on:
     secrets:
       SONAR_TOKEN:
         required: true
-jobs:   
+jobs:
   check-and-report:
+    env:
+      GRADLE_USER_HOME: /runner/.gradle
     name: Lint, Test And Reports
     runs-on: [self-hosted, Linux, X64, mortar-runner]
     steps:
@@ -39,7 +41,7 @@ jobs:
         id: get-sha
         run: |
           cd ${{ github.workspace }}/get-sha-temp
-          echo "::set-output name=short-sha::$(git rev-parse --short=10 HEAD)"
+          echo "short-sha=$(git rev-parse --short=10 HEAD)" >> "$GITHUB_OUTPUT"
           rm -rf ${{ github.workspace }}/get-sha-temp
       - name: Checkout code
         uses: actions/checkout@v3
@@ -59,8 +61,8 @@ jobs:
             RD_DIFF="-diff=\"git diff ${{ steps.get-sha.outputs.sha }} ${{ inputs.app-path }}"
           fi
 
-          echo "::set-output name=reviewdog-reporter::${RD_REPORT}"
-          echo "::set-output name=reviewdog-diff::${RD_DIFF}"
+          echo "reviewdog-reporter=${RD_REPORT}" >> "$GITHUB_OUTPUT"
+          echo "reviewdog-diff=${RD_DIFF}" >> "$GITHUB_OUTPUT"
         shell: bash
       - name: Report Summary
         run: |
@@ -87,18 +89,11 @@ jobs:
         shell: bash
       - name: Run gradle for lint, test and sonarqube
         id: gradle-run
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ inputs.sonar-host-url }}
-          GRADLE_USER_HOME: /runner/.gradle
         run: |
-          ${{ inputs.gradlew-path }}/gradlew check jacocoTestReport sonarqube \
+          ${{ inputs.gradlew-path }}/gradlew check jacocoTestReport \
           --project-dir=${{ inputs.app-path }} \
           --info \
-          --continue \
-          -Dsonar.qualitygate.wait=true \
-          -Dsonar.projectVersion='${{ steps.get-sha.outputs.short-sha }}-pr' \
-          -Dsonar.projectName="${{ inputs.app-name }}"
+          --continue
         shell: bash
       - if: failure()
         name: Upload Reports
@@ -136,5 +131,17 @@ jobs:
           review "$REPORTS_DIR"/ktlint/ktlintMainSourceSetCheck/ktlintMainSourceSetCheck.xml "Report / ktlint-source"
           review "$REPORTS_DIR"/ktlint/ktlintTestSourceSetCheck/ktlintTestSourceSetCheck.xml "Report / ktlint-test"
           review "$REPORTS_DIR"/detekt/detekt.xml "Report / detekt"
+        shell: bash
+      - name: Report sonarqube
+        run: |
+          ${{ inputs.gradlew-path }}/gradlew sonarqube \
+          --project-dir=${{ inputs.app-path }} \
+          --info \
+          --continue \
+          -Dsonar.qualitygate.wait=true \
+          -Dsonar.projectVersion='${{ steps.get-sha.outputs.short-sha }}-pr' \
+          -Dsonar.projectName="${{ inputs.app-name }}" \
+          -Dsonar.login="${{ secrets.SONAR_TOKEN }}" \
+          -Dsonar.host.url="${{ inputs.sonar-host-url }}"
         shell: bash
   

@@ -42,8 +42,8 @@ jobs:
           SHA=$(git rev-parse HEAD)
           SHORT_SHA=$(git rev-parse --short=10 HEAD)
           rm -rf ${{ github.workspace }}/get-sha-temp
-          echo "::set-output name=short-sha::${SHORT_SHA}"
-          echo "::set-output name=sha::${SHA}"
+          echo "short-sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
 
           echo "main sha: ${SHA}, current sha: ${{github.sha}}" >> "$GITHUB_STEP_SUMMARY"
       - name: Checkout code
