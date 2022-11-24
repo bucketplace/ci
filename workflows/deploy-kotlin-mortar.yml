@@ -72,7 +72,7 @@ on:
 jobs:
   submit-sonarqube:
     name: ""
-    uses: './.github/workflows/reusable-submit-sonarqube-analysis-kotlin.yml'
+    uses: './workflows/reusable-submit-sonarqube-analysis-kotlin.yml'
     with:
       app-name: ${{ inputs.app-name }}
       app-path: ${{ inputs.app-path }}
@@ -133,11 +133,11 @@ jobs:
           image-tag: ${{ needs.build-and-push-nonprod.outputs.image-tag  }}
           version: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
 
-  deploy-testing:
-    environment: testing
+  deploy-qa:
+    environment: qa
     concurrency: 
-      group: ci-testing-${{ inputs.app-name }}
-    name: Deploy - Testing
+      group: ci-qa-${{ inputs.app-name }}
+    name: Deploy - QA
     runs-on: [self-hosted, Linux, X64, no-cache]
     needs: [build-and-push-nonprod]
     steps:
@@ -148,7 +148,7 @@ jobs:
           BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
         with:
           application: ${{ inputs.app-name }}
-          profile: testing
+          profile: qa
           image-tag: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
           version: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
       - name: Cancel previous workflows run
@@ -234,7 +234,7 @@ jobs:
     if: inputs.auto-release
     name: Release
     needs: [build-and-push-prod]
-    uses: './.github/workflows/reusable-github-release.yml'
+    uses: './workflows/reusable-github-release.yml'
     with:
       app-name: ${{ inputs.app-name }}
       release-note: ${{ inputs.release-note }}
