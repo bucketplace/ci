@@ -72,7 +72,7 @@ on:
 jobs:
   submit-sonarqube:
     name: ""
-    uses: './.github/workflows/reusables/submit-sonarqube-analysis-kotlin.yml'
+    uses: './.github/workflows/reusable-submit-sonarqube-analysis-kotlin.yml'
     with:
       app-name: ${{ inputs.app-name }}
       app-path: ${{ inputs.app-path }}
@@ -234,7 +234,7 @@ jobs:
     if: inputs.auto-release
     name: Release
     needs: [build-and-push-prod]
-    uses: './.github/workflows/reusables/github-release.yml'
+    uses: './.github/workflows/reusable-github-release.yml'
     with:
       app-name: ${{ inputs.app-name }}
       release-note: ${{ inputs.release-note }}
