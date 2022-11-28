@@ -1,0 +1,44 @@
+name: "Node.js Test"
+
+on:
+  workflow_call:
+    inputs:
+      package-manager:
+        description: "Specifies which package manager to be used"
+        required: false
+        default: 'yarn'
+        type: string
+      test-command:
+        description: "Specifies a test command that will be passed to the package manager"
+        required: false
+        default: 'test'
+        type: string
+      test-command-args:
+        description: "Specifies an optional arguments to the test command"
+        required: false
+        default: ''
+        type: string
+
+env:
+  NODE_ENV: development # This must always be set. Otherwise, required dependencies to run test will not be installed or inconsistency happens.
+  CI: true
+
+jobs:
+  run-test:
+    if: ${{ inputs.package-manager == 'yarn' }}
+    name: Run Node.js test
+    runs-on: [self-hosted, Linux, X64, cache, node-16]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          if [[ "${{ inputs.package-manager == 'npm' }}" == "true" ]]; then
+            npm ci
+          elif [[ "${{ inputs.package-manager == 'yarn' }}" == "true" ]]; then
+            yarn install --immutable
+          elif [[ "${{ inputs.package-manager == 'yarn-legacy' }}" == "true" ]]; then
+            yarn install --frozen-lockfile
+          fi
+      - name: Run test
+        run: ${{ inputs.package-manager }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
