@@ -29,7 +29,7 @@ jobs:
     name: Run Node.js test
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     steps:
-      - name: Check out the code
+      - name: Check out code
         uses: actions/checkout@v3
       - name: Install dependencies
         run: |
@@ -40,5 +40,5 @@ jobs:
           elif [[ "${{ inputs.package-manager == 'yarn-legacy' }}" == "true" ]]; then
             yarn install --frozen-lockfile
           fi
-      - name: Run the test
+      - name: Run test
         run: ${{ inputs.package-manager }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
