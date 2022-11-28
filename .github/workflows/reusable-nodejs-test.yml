@@ -33,19 +33,39 @@ jobs:
       - name: Determine which package manager to use
         id: package-manager
         run: |
-          if [[ "${{ inputs.package-manager == '' }}" == "true" ]]; then
-            PKG_BIN="yarn"
-            INSTALL_CMD="yarn install --immutable"
-          elif [[ "${{ inputs.package-manager == 'npm' }}" == "true" ]]; then
-            PKG_BIN="npm"
-            INSTALL_CMD="npm ci"
-          elif [[ "${{ inputs.package-manager == 'yarn' }}" == "true" ]]; then
-            PKG_BIN="yarn"
-            INSTALL_CMD="yarn install --immutable"
-          elif [[ "${{ inputs.package-manager == 'yarn-legacy' }}" == "true" ]]; then
-            PKG_BIN="yarn"
-            INSTALL_CMD="yarn install --frozen-lockfile"
+          PACKAGE_MANAGER="${{ inputs.package-manager }}"
+          # Try to infer which package manager currently in use if not specified
+          if [[ "${PACKAGE_MANAGER}" == "" ]]; then
+            if [[ -f "yarn.lock" ]]; then
+              if [[ -d ".yarn/" ]]; then
+                PACKAGE_MANAGER="yarn"
+              else
+                PACKAGE_MANAGER="yarn-legacy"
+              fi
+            else
+              PACKAGE_MANAGER="npm"
+            fi
           fi
+          # Prepare outputs
+          case $PACKAGE_MANAGER in
+            npm)
+              PKG_BIN="npm"
+              INSTALL_CMD="npm ci"
+              ;;
+            yarn)
+              PKG_BIN="yarn"
+              INSTALL_CMD="yarn install --immutable"
+              ;;
+            yarn-legacy)
+              PKG_BIN="yarn"
+              INSTALL_CMD="yarn install --frozen-lockfile"
+              ;;
+            *)
+              echo "Unknown package manager type"
+              exit 1
+              ;;
+          esac
+          # Print outputs
           echo "bin=${PKG_BIN}" >> $GITHUB_OUTPUT
           echo "install-command=${INSTALL_CMD}" >> $GITHUB_OUTPUT
       - name: Install dependencies
