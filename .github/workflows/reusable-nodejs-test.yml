@@ -31,14 +31,14 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v3
-      - name: Install dependencies with NPM
-        if: ${{ inputs.package-manager == 'npm' }}
-        run: npm ci
-      - name: Install dependencies with Yarn
-        if: ${{ inputs.package-manager == 'yarn' }}
-        run: yarn install --immutable
-      - name: Install dependencies with Yarn Legacy
-        if: ${{ inputs.package-manager == 'yarn-legacy' }}
-        run: yarn install --frozen-lockfile
+      - name: Install dependencies
+        run: |
+          if [[ "${{ inputs.package-manager == 'npm' }}" == "true" ]]; then
+            npm ci
+          elif [[ "${{ inputs.package-manager == 'yarn' }}" == "true" ]]; then
+            yarn install --immutable
+          elif [[ "${{ inputs.package-manager == 'yarn-legacy' }}" == "true" ]]; then
+            yarn install --frozen-lockfile
+          fi
       - name: Run the test
         run: ${{ inputs.package-manager }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
