@@ -25,7 +25,6 @@ env:
 
 jobs:
   run-test:
-    if: ${{ inputs.package-manager == 'yarn' }}
     name: Run Node.js test
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     steps:
