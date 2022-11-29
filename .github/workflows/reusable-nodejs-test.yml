@@ -6,7 +6,7 @@ on:
       package-manager:
         description: "Specifies which package manager to be used"
         required: false
-        default: 'yarn'
+        default: ''
         type: string
       test-command:
         description: "Specifies a test command that will be passed to the package manager"
@@ -30,14 +30,47 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Install dependencies
+      - name: Determine which package manager to use
+        id: package-manager
         run: |
-          if [[ "${{ inputs.package-manager == 'npm' }}" == "true" ]]; then
-            npm ci
-          elif [[ "${{ inputs.package-manager == 'yarn' }}" == "true" ]]; then
-            yarn install --immutable
-          elif [[ "${{ inputs.package-manager == 'yarn-legacy' }}" == "true" ]]; then
-            yarn install --frozen-lockfile
+          PACKAGE_MANAGER="${{ inputs.package-manager }}"
+          # Try to infer which package manager currently in use if not specified
+          if [[ "${PACKAGE_MANAGER}" == "" ]]; then
+            if [[ -f "yarn.lock" ]]; then
+              if [[ -d ".yarn/" ]]; then
+                PACKAGE_MANAGER="yarn"
+              else
+                PACKAGE_MANAGER="yarn-legacy"
+              fi
+            else
+              PACKAGE_MANAGER="npm"
+            fi
           fi
+          # Prepare outputs
+          case $PACKAGE_MANAGER in
+            npm)
+              PKG_BIN="npm"
+              INSTALL_CMD="npm ci"
+              ;;
+            yarn)
+              PKG_BIN="yarn"
+              INSTALL_CMD="yarn install --immutable"
+              ;;
+            yarn-legacy)
+              PKG_BIN="yarn"
+              INSTALL_CMD="yarn install --frozen-lockfile"
+              ;;
+            *)
+              echo "Unknown package manager type"
+              exit 1
+              ;;
+          esac
+          # Print outputs
+          echo "Using the package manager: ${PKG_BIN}"
+          echo "bin=${PKG_BIN}" >> $GITHUB_OUTPUT
+          echo "Using the install command: ${INSTALL_CMD}"
+          echo "install-command=${INSTALL_CMD}" >> $GITHUB_OUTPUT
+      - name: Install dependencies
+        run: ${{ steps.package-manager.outputs.install-command }}
       - name: Run test
-        run: ${{ inputs.package-manager }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
+        run: ${{ steps.package-manager.outputs.bin }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
