@@ -144,7 +144,7 @@ jobs:
         with:
           projectName: ${{ inputs.app-name }}
           projectKey: ${{ inputs.app-name }}
-          baseDir: ${{ env.GITHUB_WORKSPACE }}/${{ inputs.app-path }}
+          baseDir: ${{ github.workspace }}/${{ inputs.app-path }}
           token: ${{ secrets.SONAR_TOKEN }}
           url: ${{ inputs.sonar-host-url }}
           enablePullRequestDecoration: true
