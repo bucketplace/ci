@@ -106,7 +106,7 @@ jobs:
         with:
           name: Failure Reports
           path: ${{ inputs.app-path }}/build/reports/
-      - if: always() && github.event_name != 'workflow_dispatch'
+      - if: ( success() || failure() ) && github.event_name != 'workflow_dispatch'
         name: Add coverage to PR
         uses: madrapps/jacoco-report@v1.3
         with:
@@ -116,7 +116,7 @@ jobs:
           min-coverage-changed-files: 70
           update-comment: true
           title: "Coverage Report"
-      - if: always()
+      - if: success() || failure()
         name: Run reviewdog
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -153,12 +153,22 @@ jobs:
           organization: bucketplace
           onlyConfig: true
       - name: Report sonarqube
+        id: run-sonarqube
         run: |
           ${{ inputs.gradlew-path }}/gradlew sonarqube \
           --project-dir=${{ inputs.app-path }} \
           --info \
-          --continue \
           -Dsonar.projectBaseDir='${{ steps.check-conditions.outputs.sonarqube-basedir }}' \
           ${{ steps.sonarqube-params.outputs.sonarParameters }}
         shell: bash
-  
+      - name: Comment Sonarqube Report
+        if: ( success() || failure() ) && github.event_name == 'pull_request'
+        uses: thollander/actions-comment-pull-request@v1.6.0
+        with:
+          message: |
+            #### Sonarqube Report
+            Result: `${{steps.run-sonarqube.outcome}}`
+
+            See [Sonarqube Report](${{ inputs.sonar-host-url }}/dashboard?id=${{ inputs.app-name }}&pullRequest=${{ github.event.pull_request.number }}) (login required)
+          comment_includes: 'SonarQube Report'
+
