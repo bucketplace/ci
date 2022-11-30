@@ -67,6 +67,7 @@ jobs:
 
           echo "reviewdog-reporter=${RD_REPORT}" >> "$GITHUB_OUTPUT"
           echo "reviewdog-diff=${RD_DIFF}" >> "$GITHUB_OUTPUT"
+          echo "sonarqube-basedir=$(pwd)/${{ inputs.app-path }}" >> "$GITHUB_OUTPUT"
         shell: bash
       - name: Report Summary
         run: |
@@ -144,7 +145,7 @@ jobs:
         with:
           projectName: ${{ inputs.app-name }}
           projectKey: ${{ inputs.app-name }}
-          baseDir: ${{ github.workspace }}/${{ inputs.app-path }}
+          baseDir: ${{ steps.check-conditions.outputs.sonarqube-basedir }}
           token: ${{ secrets.SONAR_TOKEN }}
           url: ${{ inputs.sonar-host-url }}
           enablePullRequestDecoration: true
