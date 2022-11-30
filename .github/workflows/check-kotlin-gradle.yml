@@ -145,7 +145,6 @@ jobs:
         with:
           projectName: ${{ inputs.app-name }}
           projectKey: ${{ inputs.app-name }}
-          baseDir: ${{ steps.check-conditions.outputs.sonarqube-basedir }}
           token: ${{ secrets.SONAR_TOKEN }}
           url: ${{ inputs.sonar-host-url }}
           enablePullRequestDecoration: true
@@ -159,6 +158,7 @@ jobs:
           --project-dir=${{ inputs.app-path }} \
           --info \
           --continue \
+          -Dsonar.projectBaseDir='${{ steps.check-conditions.outputs.sonarqube-basedir }}' \
           ${{ steps.sonarqube-params.outputs.sonarParameters }}
         shell: bash
   
