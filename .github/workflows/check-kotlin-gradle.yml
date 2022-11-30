@@ -7,6 +7,10 @@ on:
         description: "앱 이름"
         required: true
         type: string
+      app-version:
+        description: "앱 버전"
+        required: false
+        type: string
       app-path:
         type: string
         description: "앱 기준 디렉토리"
@@ -134,16 +138,26 @@ jobs:
           review "$REPORTS_DIR"/ktlint/ktlintTestSourceSetCheck/ktlintTestSourceSetCheck.xml "Report / ktlint-test"
           review "$REPORTS_DIR"/detekt/detekt.xml "Report / detekt"
         shell: bash
+      - name: SonarQube Scanner Action
+        id: sonarqube-params
+        uses: philips-software/sonar-scanner-action@v1.5.1
+        with:
+          projectName: ${{ inputs.app-name }}
+          projectKey: ${{ inputs.app-name }}
+          baseDir: ${{ inputs.app-path }}
+          token: ${{ secrets.SONAR_TOKEN }}
+          url: ${{ inputs.sonar-host-url }}
+          enablePullRequestDecoration: true
+          isCommunityEdition: false
+          runQualityGate: true
+          organization: bucketplace
+          onlyConfig: true
       - name: Report sonarqube
         run: |
           ${{ inputs.gradlew-path }}/gradlew sonarqube \
           --project-dir=${{ inputs.app-path }} \
           --info \
           --continue \
-          -Dsonar.qualitygate.wait=true \
-          -Dsonar.projectVersion='${{ steps.get-sha.outputs.short-sha }}-pr' \
-          -Dsonar.projectName="${{ inputs.app-name }}" \
-          -Dsonar.login="${{ secrets.SONAR_TOKEN }}" \
-          -Dsonar.host.url="${{ inputs.sonar-host-url }}"
+          ${{ steps.sonarqube-params.outputs.sonarParameters }}
         shell: bash
   
