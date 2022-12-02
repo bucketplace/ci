@@ -3,6 +3,11 @@ name: "Node.js Test"
 on:
   workflow_call:
     inputs:
+      working-directory:
+        description: "Specifies a base directory to run the task from"
+        required: false
+        default: './'
+        type: string
       nodejs-version:
         description: "Specifies what Node.js version to use"
         required: false
@@ -32,6 +37,9 @@ jobs:
   run-test:
     name: Run Node.js test
     runs-on: [self-hosted, Linux, X64, cache, node-16]
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
