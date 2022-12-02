@@ -7,18 +7,14 @@ on:
         description: "앱 이름"
         required: true
         type: string
-      app-version:
-        description: "앱 버전"
-        required: false
-        type: string
       app-path:
         type: string
         description: "앱 기준 디렉토리"
         required: false
         default: "."
-      lint-path:
+      lint-config:
         type: string
-        description: "golangci-lint config 파일 path"
+        description: "golangci-lint config 파일 이름"
         required: false
         default: ".golangci.yaml"
       filter-mode:
@@ -34,10 +30,42 @@ on:
       SONAR_TOKEN:
         required: true
 jobs:
-  check-and-report:
-    name: Lint, Test And Reports
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
+          go_version_file: ${{ inputs.app-path }}/go.mod
+          reporter: ${{ inputs.reporter }}
+          filter_mode: ${{ inputs.filter-mode }}
+          fail_on_error: true
+          workdir: ${{ inputs.app-path }}
+          golangci_lint_version: v1.50.1
+          golangci_lint_flags: |
+            --config=${{ inputs.lint-config }} ./...
+
+  test-report:
+    name: Test And Report
     runs-on: [self-hosted, Linux, X64, cache]
     steps:
+      - name: Report Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## Request Information
+          | Name | Details |
+          | --- | --- |
+          | App Name | ${{ inputs.app-name }} |
+          | App Path | ${{ inputs.app-path }} |
+          | Lint Config Path | ${{ inputs.lint-config}} |
+          | Deployed By | @${{ github.actor }} |
+
+          EOF
+        shell: bash
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Go
@@ -50,70 +78,31 @@ jobs:
         run: |
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
           go env -w GONOSUMDB=go.dailyhou.se && \
+          go install github.com/axw/gocov/gocov@latest && \
+          go install github.com/AlekSi/gocov-xml@latest && \
           go install github.com/onsi/ginkgo/v2/ginkgo@v2.5.1
-      - name: Check Conditions
-        id: check-conditions
-        run: |
-          if [[ "${{ startsWith(github.event_name, 'pull_request') }}" == "true" ]]; then
-            RD_REPORT="github-pr-review"
-          elif [[ "${{ github.event.head_commit != null }}" == "true" ]]; then
-            RD_REPORT="github-check"
-          else
-            RD_REPORT="local"
-            RD_DIFF="-diff=\"git diff ${{ steps.get-sha.outputs.sha }} ${{ inputs.app-path }}"
-          fi
 
-          echo "reviewdog-reporter=${RD_REPORT}" >> "$GITHUB_OUTPUT"
-          echo "reviewdog-diff=${RD_DIFF}" >> "$GITHUB_OUTPUT"
-          echo "sonarqube-basedir=$(pwd)/${{ inputs.app-path }}" >> "$GITHUB_OUTPUT"
-        shell: bash
-      - name: Report Summary
-        run: |
-          cat >> "$GITHUB_STEP_SUMMARY" << EOF
-          ## Request Information
-          | Name | Details |
-          | --- | --- |
-          | App Name | ${{ inputs.app-name }} |
-          | App Path | ${{ inputs.app-path }} |
-          | Lint Config Path | ${{ inputs.lint-path}} |
-          | Sonar Version | ${{ steps.check-conditions.outputs.sonar_version }} |
-          | Deployed By | @${{ github.actor }} |
-
-          EOF
-        shell: bash
-      - name: Lint
-        uses: reviewdog/action-golangci-lint@v2
-        with:
-          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
-          go_version_file: ${{ inputs.app-path }}/go.mod
-          reporter: ${{ inputs.reporter }}
-          filter_mode: ${{ inputs.filter-mode }}
-          fail_on_error: true
-          golangci_lint_version: 1.50.1
-          golangci_lint_flags: |
-            --config=${{ inputs.lint-path }} \
-            ${{ inputs.app-path }}/...
       - name: Test
-        if: always()
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH && \
-          ginkgo -v -race --trace --cover \
-            --junit-report=coverage.xml \
-            --coverprofile=coverage.txt \
-            ${{ inputs.app-path }}/...
-
-      - if: always() && github.event_name != 'workflow_dispatch'
-        name: Add coverage to PR
-        uses: madrapps/jacoco-report@v1.3
+          cd ${{ inputs.app-path }} && \
+          ginkgo -p --race --trace --cover --coverprofile=coverage.txt ./... && \
+          gocov convert coverage.txt | gocov-xml > coverage.xml
+      - name: Create Coverage Information
+        if: always() && github.event_name == 'pull_request'
+        uses: irongut/CodeCoverageSummary@v1.3.0
         with:
-          paths: ${{ inputs.app-path }}/coverage.xml
-          token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 70
-          min-coverage-changed-files: 70
-          update-comment: true
-          title: "Coverage Report"
-
+          filename: "${{ inputs.app-path }}/coverage.xml"
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: file
+          thresholds: '70 70'
       - name: SonarQube Scanner Parameters Config
+        if: always()
         id: sonarqube-params
         uses: philips-software/sonar-scanner-action@v1.5.1
         with:
@@ -123,7 +112,6 @@ jobs:
           url: ${{ inputs.sonar-host-url }}
           enablePullRequestDecoration: true
           isCommunityEdition: false
-          runQualityGate: true
           organization: bucketplace
           onlyConfig: true
       - name: SonarQube Scan
@@ -133,17 +121,23 @@ jobs:
           SONAR_HOST_URL: ${{ inputs.sonar-host-url }}
         with:
           projectBaseDir: ${{ inputs.app-path }}
-          args: |
-            --info \
-            -Dsonar.go.coverage.reportPaths=coverage.txt \ 
+          args: >
+            -Dsonar.go.coverage.reportPaths=coverage.txt
+            -Dsonar.exclusions=**/*_test.go
             ${{ steps.sonarqube-params.outputs.sonarParameters }}
-      - name: Comment Sonarqube Report
-        if: always() && github.event_name == 'pull_request'
-        uses: thollander/actions-comment-pull-request@v1.6.0
-        with:
-          message: |
-            #### Sonarqube Report
+      - name: Add Result To Summary
+        if: always()
+        run: |
+          cat code-coverage-results.md >> result.md
+          echo "" >> result.md
+          echo "---" >> result.md
+          echo "#### Sonarqube Report" >> result.md
+          echo "See [Sonarqube Report](${{ inputs.sonar-host-url }}/dashboard?id=${{ inputs.app-name }}&pullRequest=${{ github.event.pull_request.number }}) (login required)" >> result.md
+          cat result.md >> "$GITHUB_STEP_SUMMARY"
 
-            Result: `${{steps.run-sonarqube.outcome}}`
-            See [Sonarqube Report](${{ inputs.sonar-host-url }}/dashboard?id=${{ inputs.app-name }}&pullRequest=${{ github.event.pull_request.number }}) (login required)
-          comment_includes: 'SonarQube Report'
+      - name: Add Report To PR
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: result.md
