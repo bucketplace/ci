@@ -3,8 +3,13 @@ name: "Node.js Test"
 on:
   workflow_call:
     inputs:
+      nodejs-version:
+        description: "Specifies what Node.js version to use"
+        required: false
+        default: '16'
+        type: string
       package-manager:
-        description: "Specifies which package manager to be used"
+        description: "Specifies which package manager to use"
         required: false
         default: ''
         type: string
@@ -30,6 +35,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+      - name: Use Node.js ${{ inputs.nodejs-version }}
+        run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
       - name: Determine which package manager to use
         id: package-manager
         run: |
