@@ -4,7 +4,7 @@ on:
   workflow_call:
     inputs:
       app-name:
-        description: "앱 이름"
+        description: "sonarqube 프로젝트를 선택을 위한 앱 이름"
         required: true
         type: string
       app-path:
