@@ -34,7 +34,7 @@ jobs:
     env:
       GRADLE_USER_HOME: /runner/.gradle
     name: Lint, Test And Reports
-    runs-on: [self-hosted, Linux, X64, mortar-runner-test]
+    runs-on: [self-hosted, Linux, X64, mortar-runner]
     steps:
       - name: Checkout Code for Get Main SHA
         uses: actions/checkout@v3
