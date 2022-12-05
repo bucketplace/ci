@@ -17,6 +17,11 @@ on:
         description: "golangci-lint config 파일 이름"
         required: false
         default: ".golangci.yaml"
+      go-version:
+        type: string
+        description: go 버전
+        required: false
+        default: "1.18"
       filter-mode:
         type: string
         description: reviewdog 결과 필터링 모드. [added, diff_context, file, nofilter] 중 하나
@@ -40,7 +45,7 @@ jobs:
         uses: reviewdog/action-golangci-lint@v2
         with:
           reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
-          go_version_file: ${{ inputs.app-path }}/go.mod
+          go_version: ${{ inputs.go-version }}
           reporter: ${{ inputs.reporter }}
           filter_mode: ${{ inputs.filter-mode }}
           fail_on_error: true
@@ -73,7 +78,7 @@ jobs:
         with:
           cache: true
           cache-dependency-path: ${{ inputs.app-path }}/go.sum
-          go-version-file: ${{ inputs.app-path }}/go.mod
+          go-version: ^${{ inputs.go-version }}
       - name: Setup Environment
         run: |
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
