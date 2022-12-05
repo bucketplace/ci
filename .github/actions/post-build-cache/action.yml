@@ -1,0 +1,45 @@
+name: "Post-Process Build Cache"
+description: "Post-Process Build Cache"
+inputs:
+  app-name:
+    description: "앱 이름"
+    required: true
+  cache-path:
+    description: "캐시 경로"
+    required: false
+    default: "/var/cache"
+  gradlew-execute:
+    description: "gradlew 경로"
+    required: false
+    default: "gradle"
+  
+runs:
+  using: composite
+  steps:
+    - name: Post-Process Build Cache
+      id: post-cache
+      shell: bash
+      run: |
+        # restore envs
+        SHARED_CACHE_DIR="${{ inputs.cache-path }}/${{ inputs.app-name }}"
+        LOCAL_CACHE_DIR="/home/runner/cache"
+        
+        # For Gradle
+        ${{ inputs.gradle-execute }} -stop
+        # remove all gradle version dirs & lock files for unblocking caches
+        find ${LOCAL_CACHE_DIR}/gradle/caches -type d -regex "${LOCAL_CACHE_DIR}/gradle/caches/[0-9][0-9\.]*$" -prune -execdir rm -rf "{}" \;
+        find ${LOCAL_CACHE_DIR}/gradle/caches -type f -regex "${LOCAL_CACHE_DIR}/gradle/caches/.*\.lock$" -delete
+        find ${LOCAL_CACHE_DIR}/gradle/caches -type f -regex "${LOCAL_CACHE_DIR}/gradle/caches/.*gc.properties$" -delete
+        echo "Cleaning up Lock files and gc.properties has completed"
+
+        # copies all caches
+        mkdir -p "${LOCAL_CACHE_DIR}/gradle/caches" 
+        mkdir -p "${SHARED_CACHE_DIR}/gradle/caches"
+        cp -a ${LOCAL_CACHE_DIR}/gradle/caches/* ${SHARED_CACHE_DIR}/gradle/caches
+        echo "Storing gradle caches has completed."
+        cp -a ${LOCAL_CACHE_DIR}/gradle/wrapper/* ${SHARED_CACHE_DIR}/gradle/wrapper
+        echo "Storing gradle wrapper cache has completed."
+        # remove local caches
+        rm -rf "${LOCAL_CACHE_DIR}"
+        echo "Removing local caches has completed."
+        
