@@ -47,11 +47,6 @@ jobs:
           cd ${{ github.workspace }}/get-sha-temp
           echo "short-sha=$(git rev-parse --short=10 HEAD)" >> "$GITHUB_OUTPUT"
           rm -rf ${{ github.workspace }}/get-sha-temp
-      - name: Pre-Process Build Cache
-        id: pre-cache
-        uses: bucketplace/ci/.github/actions/pre-build-cache@feature/cache-test
-        with:
-          app-name: ${{ inputs.app-name }}
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Reviewdog
@@ -176,11 +171,4 @@ jobs:
 
             See [Sonarqube Report](${{ inputs.sonar-host-url }}/dashboard?id=${{ inputs.app-name }}&pullRequest=${{ github.event.pull_request.number }}) (login required)
           comment_includes: 'SonarQube Report'
-      - name: Post-Process Build Cache
-        if: always() && steps.pre-cache.outcome == 'success'
-        id: post-cache
-        uses: bucketplace/ci/.github/actions/post-build-cache@feature/cache-test
-        with:
-          app-name: ${{ inputs.app-name }}
-          gradle-execute: ${{inputs.gradlew-path}}/gradlew
 
