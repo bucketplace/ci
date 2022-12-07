@@ -1,9 +1,9 @@
-name: "Node.js Test"
+name: "Check Node.js"
 
 on:
   workflow_call:
     inputs:
-      working-directory:
+      app-path:
         description: "Specifies a base directory to run the task from"
         required: false
         default: './'
@@ -39,7 +39,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     defaults:
       run:
-        working-directory: ${{ inputs.working-directory }}
+        working-directory: ${{ inputs.app-path }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
