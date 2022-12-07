@@ -1,0 +1,148 @@
+name: "Check Go"
+
+on:
+  workflow_call:
+    inputs:
+      app-name:
+        description: "sonarqube 프로젝트를 선택을 위한 앱 이름"
+        required: true
+        type: string
+      app-path:
+        type: string
+        description: "앱 기준 디렉토리"
+        required: false
+        default: "."
+      lint-config:
+        type: string
+        description: "golangci-lint config 파일 이름"
+        required: false
+        default: ".golangci.yaml"
+      go-version:
+        type: string
+        description: go 버전
+        required: false
+        default: "1.18"
+      filter-mode:
+        type: string
+        description: reviewdog 결과 필터링 모드. [added, diff_context, file, nofilter] 중 하나
+        default: nofilter # 모든 결과를 보여줌
+      sonar-host-url:
+        type: string
+        description: "sonarqube 호스트 URL"
+        required: false
+        default: "https://sonarqube.co-workerhou.se"
+    secrets:
+      SONAR_TOKEN:
+        required: true
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Lint
+        uses: reviewdog/action-golangci-lint@v2
+        with:
+          reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
+          go_version: ${{ inputs.go-version }}
+          reporter: ${{ inputs.reporter }}
+          filter_mode: ${{ inputs.filter-mode }}
+          fail_on_error: true
+          workdir: ${{ inputs.app-path }}
+          golangci_lint_version: v1.50.1
+          golangci_lint_flags: |
+            --config=${{ inputs.lint-config }} ./...
+
+  test-report:
+    name: Test And Report
+    runs-on: [self-hosted, Linux, X64, cache]
+    steps:
+      - name: Report Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## Request Information
+          | Name | Details |
+          | --- | --- |
+          | App Name | ${{ inputs.app-name }} |
+          | App Path | ${{ inputs.app-path }} |
+          | Lint Config Path | ${{ inputs.lint-config}} |
+          | Deployed By | @${{ github.actor }} |
+
+          EOF
+        shell: bash
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          cache-dependency-path: ${{ inputs.app-path }}/go.sum
+          go-version: ^${{ inputs.go-version }}
+      - name: Setup Environment
+        run: |
+          go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
+          go env -w GONOSUMDB=go.dailyhou.se && \
+          go install github.com/axw/gocov/gocov@latest && \
+          go install github.com/AlekSi/gocov-xml@latest && \
+          go install github.com/onsi/ginkgo/v2/ginkgo@v2.5.1
+
+      - name: Test
+        run: |
+          export PATH=$(go env GOPATH)/bin:$PATH && \
+          cd ${{ inputs.app-path }} && \
+          ginkgo -p --race --trace --cover --coverprofile=coverage.txt ./... && \
+          gocov convert coverage.txt | gocov-xml > coverage.xml
+      - name: Create Coverage Information
+        if: always() && github.event_name == 'pull_request'
+        uses: irongut/CodeCoverageSummary@v1.3.0
+        with:
+          filename: "${{ inputs.app-path }}/coverage.xml"
+          badge: true
+          fail_below_min: true
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: file
+          thresholds: '70 70'
+      - name: SonarQube Scanner Parameters Config
+        if: always()
+        id: sonarqube-params
+        uses: philips-software/sonar-scanner-action@v1.5.1
+        with:
+          projectName: ${{ inputs.app-name }}
+          projectKey: ${{ inputs.app-name }}
+          token: ${{ secrets.SONAR_TOKEN }}
+          url: ${{ inputs.sonar-host-url }}
+          enablePullRequestDecoration: true
+          isCommunityEdition: false
+          organization: bucketplace
+          onlyConfig: true
+      - name: SonarQube Scan
+        uses: sonarsource/sonarqube-scan-action@master
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ inputs.sonar-host-url }}
+        with:
+          projectBaseDir: ${{ inputs.app-path }}
+          args: >
+            -Dsonar.go.coverage.reportPaths=coverage.txt
+            -Dsonar.exclusions=**/*_test.go
+            ${{ steps.sonarqube-params.outputs.sonarParameters }}
+      - name: Add Result To Summary
+        if: always()
+        run: |
+          cat code-coverage-results.md >> result.md
+          echo "" >> result.md
+          echo "---" >> result.md
+          echo "#### Sonarqube Report" >> result.md
+          echo "See [Sonarqube Report](${{ inputs.sonar-host-url }}/dashboard?id=${{ inputs.app-name }}&pullRequest=${{ github.event.pull_request.number }}) (login required)" >> result.md
+          cat result.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Add Report To PR
+        if: always() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          recreate: true
+          path: result.md
