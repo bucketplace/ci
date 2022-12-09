@@ -26,9 +26,14 @@ on:
         description: "host url of sonarqube"
         required: false
         default: "https://sonarqube.co-workerhou.se"
+      sonar-token:
+        type: string
+        description: "sonarqube token"
+        required: false
+        default: ""
     secrets:
       SONAR_TOKEN:
-        required: true
+        required: false
 jobs:
   check-and-report:
     env:
@@ -65,9 +70,16 @@ jobs:
             RD_DIFF="-diff=\"git diff ${{ steps.get-sha.outputs.sha }} ${{ inputs.app-path }}"
           fi
 
+          if [[ "${{ inputs.sonar-token }}" == "" ]]; then
+            SONAR_TOKEN="${{ secrets.SONAR_TOKEN }}"
+          else
+            SONAR_TOKEN="${{ inputs.sonar-token }}"
+          fi
+
           echo "reviewdog-reporter=${RD_REPORT}" >> "$GITHUB_OUTPUT"
           echo "reviewdog-diff=${RD_DIFF}" >> "$GITHUB_OUTPUT"
           echo "sonarqube-basedir=$(pwd)/${{ inputs.app-path }}" >> "$GITHUB_OUTPUT"
+          echo "sonar-token=${SONAR_TOKEN}" >> "$GITHUB_OUTPUT"
         shell: bash
       - name: Report Summary
         run: |
@@ -145,7 +157,7 @@ jobs:
         with:
           projectName: ${{ inputs.app-name }}
           projectKey: ${{ inputs.app-name }}
-          token: ${{ secrets.SONAR_TOKEN }}
+          token: ${{ steps.check-conditions.outputs.sonar-token }}
           url: ${{ inputs.sonar-host-url }}
           enablePullRequestDecoration: true
           isCommunityEdition: false
