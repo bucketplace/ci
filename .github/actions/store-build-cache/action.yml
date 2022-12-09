@@ -1,0 +1,57 @@
+name: "Store Build Cache"
+description: "Store Build Cache"
+inputs:
+  app-name:
+    description: "앱 이름"
+    required: true
+  cache-path:
+    description: "캐시 경로"
+    required: false
+    default: "/home/runner/cache"
+  shared-cache-path:
+    description: "캐시 저장 경로"
+    required: false
+    default: "/var/buildcache"
+  gradlew-execute:
+    description: "gradlew 경로"
+    required: false
+    default: "gradle"
+  
+runs:
+  using: composite
+  steps:
+    - name: Store Build Cache
+      id: store-cache
+      shell: bash
+      run: |
+        # Storing build caches
+        if ! [[ -d "${{ inputs.shared-cache-path }}" ]]; then 
+          echo "Shared cache path is not exist. Skip storing cache."
+          exit 0
+        fi
+        # restore envs
+        SHARED_CACHE_DIR="${{ inputs.shared-cache-path }}/${{ inputs.app-name }}"
+        LOCAL_CACHE_DIR="${{ inputs.cache-path }}"
+        RANDOM_KEY=$(echo $RANDOM | md5sum | head -c 20)
+        
+        # For Gradle
+        ${{ inputs.gradlew-execute }} -stop
+        # remove all gradle version dirs & lock files for unblocking caches
+        find ${LOCAL_CACHE_DIR}/gradle/caches -type d -regex "${LOCAL_CACHE_DIR}/gradle/caches/[0-9][0-9\.]*$" -prune -execdir rm -rf "{}" \;
+        find ${LOCAL_CACHE_DIR}/gradle/caches -type f -regex "${LOCAL_CACHE_DIR}/gradle/caches/.*\.lock$" -delete
+        find ${LOCAL_CACHE_DIR}/gradle/caches -type f -regex "${LOCAL_CACHE_DIR}/gradle/caches/.*gc.properties$" -delete
+        echo "Cleaning up Lock files and gc.properties has completed"
+
+        # store all cache files
+        mkdir -p "${LOCAL_CACHE_DIR}/gradle/caches" \
+          "${LOCAL_CACHE_DIR}/gradle/wrapper" \
+          "${LOCAL_CACHE_DIR}/go" \
+          "${LOCAL_CACHE_DIR}/yarn" \
+          "${SHARED_CACHE_DIR}"
+        cd "${LOCAL_CACHE_DIR}"
+
+        tar --preserve-permissions -I 'zstd --fast=3' -cf "${SHARED_CACHE_DIR}/${RANDOM_KEY}.tar.zst" gradle/caches gradle/wrapper go yarn
+        mv "${SHARED_CACHE_DIR}/${RANDOM_KEY}.tar.zst" "${SHARED_CACHE_DIR}/main.tar.zst"
+        echo $RANDOM_KEY > "${SHARED_CACHE_DIR}/cache.key"
+        echo "Storing gradle cache has completed."
+        

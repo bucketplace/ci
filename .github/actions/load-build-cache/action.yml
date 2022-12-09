@@ -1,0 +1,49 @@
+name: "Load Build Cache"
+description: "Load Build Cache"
+inputs:
+  app-name:
+    description: "앱 이름"
+    required: true
+  cache-path:
+    description: "캐시 경로"
+    required: false
+    default: "/home/runner/cache"
+  shared-cache-path:
+    description: "캐시 저장 경로"
+    required: false
+    default: "/var/buildcache"
+  
+runs:
+  using: composite
+  steps:
+    - name: Load Build Cache
+      id: load-cache
+      shell: bash
+      run: |
+        # Loading build caches
+        if ! [[ -d "${{ inputs.shared-cache-path }}" ]]; then 
+          echo "Shared cache path is not exist. Skip loading cache."
+          exit 0
+        fi
+        # setup cache dirs
+        SHARED_CACHE_DIR="${{ inputs.shared-cache-path }}/${{ inputs.app-name }}"
+        LOCAL_CACHE_DIR="${{ inputs.cache-path }}"
+        
+        # For Gradle
+        mkdir -p "${LOCAL_CACHE_DIR}/gradle" \
+          "${LOCAL_CACHE_DIR}/go" \
+          "${LOCAL_CACHE_DIR}/yarn"
+        echo "GRADLE_USER_HOME=${LOCAL_CACHE_DIR}/gradle" >> $GITHUB_ENV
+        echo "YARN_CACHE_FOLDER=${LOCAL_CACHE_DIR}/yarn" >> $GITHUB_ENV
+        echo "GOMODCACHE=${LOCAL_CACHE_DIR}/go" >> $GITHUB_ENV
+        echo "Setting up environment variables has completed."
+
+        if [[ $(cat ${SHARED_CACHE_DIR}/cache.key) == $(cat ${LOCAL_CACHE_DIR}/cache.key) ]]; then
+          echo "Gradle cache key is same. Skip loading cache."
+          exit 0
+        fi
+        rm -rf ${LOCAL_CACHE_DIR}
+        mkdir -p ${LOCAL_CACHE_DIR}
+        tar --preserve-permissions -I zstd -xf "${SHARED_CACHE_DIR}/main.tar.zst" -C "${LOCAL_CACHE_DIR}"
+        cp "${SHARED_CACHE_DIR}/cache.key" "${LOCAL_CACHE_DIR}/cache.key"
+        echo "Loading cache has completed."
