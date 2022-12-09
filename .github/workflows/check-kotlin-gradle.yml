@@ -33,7 +33,7 @@ on:
         default: ""
     secrets:
       SONAR_TOKEN:
-        required: true
+        required: false
 jobs:
   check-and-report:
     env:
