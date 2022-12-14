@@ -31,6 +31,11 @@ on:
         description: "sonarqube 호스트 URL"
         required: false
         default: "https://sonarqube.co-workerhou.se"
+      sonar-exclusions:
+        type: string
+        description: "sonarqube 리포트에서 제외 대상 Path"
+        required: false
+        default: "**/*_test.go,**/mock_*.go"
     secrets:
       SONAR_TOKEN:
         required: true
@@ -128,7 +133,7 @@ jobs:
           projectBaseDir: ${{ inputs.app-path }}
           args: >
             -Dsonar.go.coverage.reportPaths=coverage.txt
-            -Dsonar.exclusions=**/*_test.go
+            -Dsonar.exclusions=${{ inputs.sonar-exclusions }}
             ${{ steps.sonarqube-params.outputs.sonarParameters }}
       - name: Add Result To Summary
         if: always()
