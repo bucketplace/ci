@@ -31,27 +31,24 @@ on:
         description: "sonarqube token"
         required: false
         default: ""
+      quality-gate:
+        type: boolean
+        description: "enable sonarqube quality gates"
+        required: false
+        default: true
     secrets:
       SONAR_TOKEN:
         required: false
 jobs:
   check-and-report:
-    env:
-      GRADLE_USER_HOME: /runner/.gradle
     name: Lint, Test And Reports
     runs-on: [self-hosted, Linux, X64, mortar-runner]
     steps:
-      - name: Checkout Code for Get Main SHA
-        uses: actions/checkout@v3
+      - name: Load Build Cache
+        id: load-build-cache
+        uses: bucketplace/ci/.github/actions/load-build-cache@latest
         with:
-          path: ${{ github.workspace }}/get-sha-temp
-          ref: ${{ github.event.repository.default_branch }}
-      - name: Get Main SHA
-        id: get-sha
-        run: |
-          cd ${{ github.workspace }}/get-sha-temp
-          echo "short-sha=$(git rev-parse --short=10 HEAD)" >> "$GITHUB_OUTPUT"
-          rm -rf ${{ github.workspace }}/get-sha-temp
+          app-name: ${{ inputs.app-name }}
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Reviewdog
@@ -67,7 +64,6 @@ jobs:
             RD_REPORT="github-check"
           else
             RD_REPORT="local"
-            RD_DIFF="-diff=\"git diff ${{ steps.get-sha.outputs.sha }} ${{ inputs.app-path }}"
           fi
 
           if [[ "${{ inputs.sonar-token }}" == "" ]]; then
@@ -92,6 +88,8 @@ jobs:
           | Gradle Path | ${{ inputs.gradlew-path}}/gradlew |
           | Sonar Version | ${{ steps.check-conditions.outputs.sonar_version }} |
           | Deployed By | @${{ github.actor }} |
+          
+          Sonarqube Quality Gate: ${{ inputs.quality-gate }}
 
           EOF
           if [[ -f "${{ inputs.app-path }}"/mortar.yaml ]]; then
@@ -116,7 +114,7 @@ jobs:
         name: Upload Reports
         uses: actions/upload-artifact@v3
         with:
-          name: Failure Reports
+          name: failure-reports-${{ inputs.app-name }}-${{ github.run_id }}
           path: ${{ inputs.app-path }}/build/reports/
       - if: ( success() || failure() ) && github.event_name != 'workflow_dispatch'
         name: Add coverage to PR
@@ -146,6 +144,7 @@ jobs:
                ${{steps.check-conditions.outputs.reviewdog-diff}}
             fi
           }
+
           review "$REPORTS_DIR"/ktlint/ktlintKotlinScriptCheck/ktlintKotlinScriptCheck.xml "Report / ktlint-script"
           review "$REPORTS_DIR"/ktlint/ktlintMainSourceSetCheck/ktlintMainSourceSetCheck.xml "Report / ktlint-source"
           review "$REPORTS_DIR"/ktlint/ktlintTestSourceSetCheck/ktlintTestSourceSetCheck.xml "Report / ktlint-test"
@@ -161,7 +160,7 @@ jobs:
           url: ${{ inputs.sonar-host-url }}
           enablePullRequestDecoration: true
           isCommunityEdition: false
-          runQualityGate: true
+          runQualityGate: ${{ inputs.quality-gate }}
           organization: bucketplace
           onlyConfig: true
       - name: Report sonarqube
@@ -182,5 +181,11 @@ jobs:
             Result: `${{steps.run-sonarqube.outcome}}`
 
             See [Sonarqube Report](${{ inputs.sonar-host-url }}/dashboard?id=${{ inputs.app-name }}&pullRequest=${{ github.event.pull_request.number }}) (login required)
-          comment_includes: 'SonarQube Report'
+          comment_includes: 'Sonarqube Report'
+      - name: Store Build Cache
+        id: store-build-cache
+        uses: bucketplace/ci/.github/actions/store-build-cache@latest
+        with:
+          app-name: ${{ inputs.app-name }}
+          gradlew-execute: ${{inputs.gradlew-path}}/gradlew
 
