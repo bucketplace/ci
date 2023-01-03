@@ -1,0 +1,67 @@
+name: "Deploy Go Package"
+
+on:
+  workflow_call:
+    inputs:
+      package-name:
+        type: string
+        description: "배포될 패키지의 앱 이름 (ex. go.dailyhou.se/gohouse/pack)"
+        required: true
+      package-version:
+        type: string
+        description: 패키지 배포 버전
+        required: true
+      package-path:
+        type: string
+        description: "레포지토리 기준 패키지 루트 디렉토리 디렉토리"
+        required: false
+        default: "."
+      go-version:
+        type: string
+        description: go 버전
+        required: false
+        default: "1.18"
+    secrets:
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+jobs:
+  lint:
+    name: Deploy
+    runs-on: [self-hosted, Linux, X64, cache]
+    steps:        
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          cache: true
+          cache-dependency-path: ${{ inputs.package-path }}/go.sum
+          go-version: ${{ inputs.go-version }}
+      - name: Setup Environment
+        run: |
+          go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
+          go env -w GONOSUMDB=go.dailyhou.se && \
+          go install go.dailyhou.se/gohouse/pack/cmd/pack@v0.2.0
+      - name: Deploy Package
+        run: |
+          export PATH=$(go env GOPATH)/bin:$PATH && \
+          pack --module-name="${{ inputs.package-name }}" \
+            --module-root-path="${{ inputs.package-path }}" \
+            --module-version="${{ inputs.package-version }}" \
+            --aws-access-key-id="${{ secrets.AWS_ACCESS_KEY_ID }}" \
+            --aws-secret-access-key="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+      
+      - name: Add Summary
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## Request Information
+          | Name | Details |
+          | --- | --- |
+          | Package Name | ${{ inputs.package-name }} |
+          | Package Version | ${{ inputs.package-version }} |
+          | App Path | ${{ inputs.package-path }} |
+          | Go Version | ${{ inputs.go-version}} |
+          | Deployed By | @${{ github.actor }} |
+          EOF

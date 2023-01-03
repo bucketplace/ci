@@ -42,12 +42,15 @@ on:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, cache]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Lint
         uses: reviewdog/action-golangci-lint@v2
+        env:                                                                    
+          GOPROXY: "https://go.co-workerhou.se,https://proxy.golang.org,direct"
+          GONOSUMDB: "go.dailyhou.se"
         with:
           reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
           go_version: ${{ inputs.go-version }}
