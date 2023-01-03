@@ -37,7 +37,7 @@ jobs:
         uses: actions/setup-go@v3
         with:
           cache: true
-          cache-dependency-path: ${{ inputs.app-path }}/go.sum
+          cache-dependency-path: ${{ inputs.package-path }}/go.sum
           go-version: ${{ inputs.go-version }}
       - name: Setup Environment
         run: |
