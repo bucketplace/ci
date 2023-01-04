@@ -43,7 +43,7 @@ jobs:
         run: |
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
           go env -w GONOSUMDB=go.dailyhou.se && \
-          go install go.dailyhou.se/gohouse/pack/cmd/pack@v0.2.0
+          go install go.dailyhou.se/gohouse/pack/cmd/pack@v0.3.0
       - name: Deploy Package
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH && \
