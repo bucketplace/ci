@@ -36,9 +36,16 @@ on:
         description: "sonarqube 리포트에서 제외 대상 Path 리스트. ','로 구분"
         required: false
         default: "**/*_test.go,**/mock_*.go"
+      coverage-threshold:
+        type: string
+        description: "unit test coverage threshold"
+        required: false
+        default: "70 70"
     secrets:
       SONAR_TOKEN:
         required: true
+      BP_DEPLOYER_GITHUB_TOKEN: # if you need private github module access
+        required: false
 jobs:
   lint:
     name: Lint
@@ -46,6 +53,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+      - name: Granting private modules access
+        env:
+          TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+        if: env.TOKEN != null
+        run: |
+          git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
       - name: Lint
         uses: reviewdog/action-golangci-lint@v2
         env:                                                                    
@@ -87,6 +100,12 @@ jobs:
           cache: true
           cache-dependency-path: ${{ inputs.app-path }}/go.sum
           go-version: ^${{ inputs.go-version }}
+      - name: Granting private modules access
+        env:
+          TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+        if: env.TOKEN != null
+        run: |
+          git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
       - name: Setup Environment
         run: |
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
@@ -113,7 +132,7 @@ jobs:
           hide_complexity: true
           indicators: true
           output: file
-          thresholds: '70 70'
+          thresholds: ${{ inputs.coverage-threshold }}
       - name: SonarQube Scanner Parameters Config
         if: always()
         id: sonarqube-params
