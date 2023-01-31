@@ -158,7 +158,7 @@ jobs:
             -Dsonar.exclusions=${{ inputs.sonar-exclusions }}
             ${{ steps.sonarqube-params.outputs.sonarParameters }}
       - name: Add Result To Summary
-        if: always()
+        if: always() && github.event_name == 'pull_request'
         run: |
           cat code-coverage-results.md >> result.md
           echo "" >> result.md
