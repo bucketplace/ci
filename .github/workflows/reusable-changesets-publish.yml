@@ -49,6 +49,8 @@ jobs:
         run: ${{ steps.package-manager.outputs.install-command }}
       - name: Build packages
         run: yarn build
+      - name: Try to exit Changesets prerelease mode
+        uses: yarn changeset pre exit
       - name: Publish package
         uses: changesets/action@v1
         with:
