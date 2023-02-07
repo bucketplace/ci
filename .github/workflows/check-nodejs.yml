@@ -47,45 +47,10 @@ jobs:
         run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
       - name: Determine which package manager to use
         id: package-manager
-        run: |
-          PACKAGE_MANAGER="${{ inputs.package-manager }}"
-          # Try to infer which package manager currently in use if not specified
-          if [[ "${PACKAGE_MANAGER}" == "" ]]; then
-            if [[ -f "yarn.lock" ]]; then
-              if [[ -d ".yarn/" ]]; then
-                PACKAGE_MANAGER="yarn"
-              else
-                PACKAGE_MANAGER="yarn-legacy"
-              fi
-            else
-              PACKAGE_MANAGER="npm"
-            fi
-          fi
-          # Prepare outputs
-          case $PACKAGE_MANAGER in
-            npm)
-              PKG_BIN="npm"
-              INSTALL_CMD="npm ci"
-              ;;
-            yarn)
-              PKG_BIN="yarn"
-              INSTALL_CMD="yarn install --immutable"
-              ;;
-            yarn-legacy)
-              PKG_BIN="yarn"
-              INSTALL_CMD="yarn install --frozen-lockfile"
-              ;;
-            *)
-              echo "Unknown package manager type"
-              exit 1
-              ;;
-          esac
-          # Print outputs
-          echo "Using the package manager: ${PKG_BIN}"
-          echo "bin=${PKG_BIN}" >> $GITHUB_OUTPUT
-          echo "Using the install command: ${INSTALL_CMD}"
-          echo "install-command=${INSTALL_CMD}" >> $GITHUB_OUTPUT
+        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
+        with:
+          package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
         run: ${{ steps.package-manager.outputs.install-command }}
       - name: Run test
-        run: ${{ steps.package-manager.outputs.bin }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
+        run: ${{ steps.package-manager.outputs.bin }} run ${{ inputs.test-command }} ${{ inputs.test-command-args }}
