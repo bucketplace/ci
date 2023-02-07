@@ -9,7 +9,7 @@ on:
         default: './'
         type: string
       nodejs-version:
-        description: "Specifies what Node.js version to use"
+        description: "Specifies which Node.js version to use"
         required: false
         default: '16'
         type: string
