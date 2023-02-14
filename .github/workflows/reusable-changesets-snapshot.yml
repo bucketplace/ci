@@ -1,0 +1,81 @@
+name: "Prerelease Packages"
+on:
+  issue_comment:
+    types: [ created ]
+  workflow_call:
+    inputs:
+      app-path:
+        description: "Specifies a base directory to run the task from"
+        required: false
+        default: './'
+        type: string
+      nodejs-version:
+        description: "Specifies which Node.js version to use"
+        required: false
+        default: '16'
+        type: string
+      package-manager:
+        description: "Specifies which package manager to use"
+        required: false
+        default: ''
+        type: string
+      build-command:
+        description: "Specifies a build command used on package finalizing before publish"
+        required: false
+        default: 'build'
+        type: string
+      snapshot-tag:
+        description: "Specifies a tag name that is used for snapshot release"
+        required: false
+        default: 'snap'
+        type: string
+
+env:
+  NODE_ENV: production
+  CI: true
+
+jobs:
+  check-comment:
+    runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
+    outputs:
+      triggered: ${{ steps.check.outputs.triggered }}
+      extra_args: ${{ steps.check.outputs.extra_args }}
+    steps:
+      - uses: bucketplace/comment-trigger@v1.0
+        id: check
+        with:
+          trigger: '/snapshot'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Run Changesets Pre release
+    runs-on: [self-hosted, Linux, X64, cache, node-16]
+    needs: check-comment
+    defaults:
+      run:
+        working-directory: ${{ inputs.app-path }}
+    steps:
+      - name: Use Node.js ${{ inputs.nodejs-version }}
+        run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
+      - name: Determine which package manager to use
+        id: package-manager
+        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
+        with:
+          package-manager: ${{ inputs.package-manager }}
+      - name: Install dependencies
+        run: ${{ steps.package-manager.outputs.install-command }}
+
+      - name: Build packages
+        run: yarn ${{ inputs.build-command }}
+
+      - name: Change version for snapshot
+        run: yarn changeset version --snapshot ${{ inputs.snapshot-tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish Snapshot
+        run: yarn changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag
+
