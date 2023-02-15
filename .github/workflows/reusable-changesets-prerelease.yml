@@ -1,8 +1,5 @@
 name: "Prerelease Packages"
 on:
-  push:
-    branches:
-      - release/*
   workflow_call:
     inputs:
       app-path:
@@ -36,7 +33,7 @@ env:
 
 jobs:
   publish:
-    name: Run Changesets Pre release
+    name: Run Changesets Prerelease
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     defaults:
       run:
@@ -52,10 +49,10 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.package-manager.outputs.install-command }}
 
-      - name: Enter Pre-release Mode
-        run: yarn changeset pre enter ${{inputs.prerelease-tag}}
+      - name: Enter Prerelease Mode
+        run: yarn changeset pre enter ${{ inputs.prerelease-tag }}
 
-      - name: Bump version for Pre-release
+      - name: Bump version for Prerelease
         run: yarn changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -63,7 +60,7 @@ jobs:
       - name: Build packages
         run: yarn ${{ inputs.build-command }}
 
-      - name: Publish Pre-release version
+      - name: Publish Prerelease version
         run: yarn changeset publish
 
       - name: Commit
@@ -72,4 +69,4 @@ jobs:
           add: '.'
           committer_name: bp-deployer
           committer_email: bp-deployer@users.noreply.github.com
-          message: '[skip actions] Pre release ${{inputs.prerelease-tag}}'
+          message: '[skip actions] Prerelease ${{inputs.prerelease-tag}}'
