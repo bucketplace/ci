@@ -1,7 +1,6 @@
-name: "Prerelease Packages"
+name: "Snapshot Packages"
+
 on:
-  issue_comment:
-    types: [ created ]
   workflow_call:
     inputs:
       app-path:
