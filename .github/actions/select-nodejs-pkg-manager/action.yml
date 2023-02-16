@@ -82,3 +82,7 @@ runs:
         echo "install-cmd=${INSTALL_CMD}" >> $GITHUB_OUTPUT
         echo "exec-cmd=${EXEC_CMD}" >> $GITHUB_OUTPUT
         echo "run-cmd=${RUN_CMD}" >> $GITHUB_OUTPUT
+        # Setting environment variables for convenience when accessing commands
+        echo "PKG_CMD_INSTALL=${INSTALL_CMD}" >> $GITHUB_ENV
+        echo "PKG_CMD_EXEC=${EXEC_CMD}" >> $GITHUB_ENV
+        echo "PKG_CMD_RUN=${RUN_CMD}" >> $GITHUB_ENV
