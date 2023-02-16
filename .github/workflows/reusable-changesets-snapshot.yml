@@ -35,7 +35,7 @@ env:
 
 jobs:
   check-comment:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, cache]
     if: github.event.action != 'closed'
     outputs:
       triggered: ${{ steps.check.outputs.triggered }}
