@@ -61,7 +61,7 @@ runs:
           yarn-legacy)
             PKG_BIN="yarn"
             INSTALL_CMD="yarn install --frozen-lockfile"
-            EXEC_CMD="yarn run"
+            EXEC_CMD="npm exec --" # Yarn Legacy doesn't have exec command, so borrowing it from npm here
             RUN_CMD="yarn run"
             ;;
           pnpm)
