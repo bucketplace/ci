@@ -48,9 +48,8 @@ jobs:
           reaction: rocket
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   publish:
-    name: Run Changesets Pre release
+    name: Run Changesets prerelease
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     needs: check-comment
     defaults:
@@ -72,5 +71,5 @@ jobs:
         run: ${{ env.PKG_CMD_EXEC }} changeset version --snapshot ${{ inputs.snapshot-tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish Snapshot
+      - name: Publish snapshot
         run: ${{ env.PKG_CMD_EXEC }} changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag

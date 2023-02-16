@@ -35,7 +35,7 @@ env:
 
 jobs:
   publish:
-    name: Run Changesets Prerelease
+    name: Run Changesets prerelease
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     defaults:
       run:
@@ -50,15 +50,15 @@ jobs:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
         run: ${{ env.PKG_CMD_INSTALL }}
-      - name: Enter Prerelease Mode
+      - name: Enter prerelease Mode
         run: ${{ env.PKG_CMD_EXEC }} changeset pre enter ${{ inputs.prerelease-tag }}
-      - name: Bump version for Prerelease
+      - name: Bump version for prerelease
         run: ${{ env.PKG_CMD_EXEC }} changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build packages
         run: ${{ env.PKG_CMD_RUN }} ${{ inputs.build-command }}
-      - name: Publish Prerelease version
+      - name: Publish prerelease version
         run: ${{ env.PKG_CMD_EXEC }} changeset publish
       - name: Commit
         uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
