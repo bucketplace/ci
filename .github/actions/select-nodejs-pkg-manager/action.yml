@@ -9,12 +9,18 @@ inputs:
     type: string
 
 outputs:
-  pkg-bin:
+  bin:
     description: "The package manager binary name"
-    value: ${{ steps.determine-package-manager.outputs.pkg-bin }}
-  install-command:
+    value: ${{ steps.determine-package-manager.outputs.bin }}
+  install-cmd:
     description: "A command that can be used to install Node.js modules in CI mode"
     value: ${{ steps.determine-package-manager.outputs.install-command }}
+  exec-cmd:
+    description: "A command prefix that can be used to execute bin modules in node_modules/.bin"
+    value: ${{ steps.determine-package-manager.outputs.exec-cmd }}
+  run-cmd:
+    description: "A command prefix that can be used to run scripts in package.json"
+    value: ${{ steps.determine-package-manager.outputs.run-command }}
 
 runs:
   using: composite
@@ -38,31 +44,41 @@ runs:
             NODEJS_PACKAGE_MANAGER="npm"
           fi
         fi
-        # Prepare outputs
+        # Prepares for outputs
         case $NODEJS_PACKAGE_MANAGER in
           npm)
             PKG_BIN="npm"
             INSTALL_CMD="npm ci"
+            EXEC_CMD="npm exec --"
+            RUN_CMD="npm run"
             ;;
           yarn)
             PKG_BIN="yarn"
             INSTALL_CMD="yarn install --immutable"
+            EXEC_CMD="yarn exec"
+            RUN_CMD="yarn run"
             ;;
           yarn-legacy)
             PKG_BIN="yarn"
             INSTALL_CMD="yarn install --frozen-lockfile"
+            EXEC_CMD="yarn run"
+            RUN_CMD="yarn run"
             ;;
           pnpm)
             PKG_BIN="pnpm"
             INSTALL_CMD="pnpm install --frozen-lockfile"
+            EXEC_CMD="pnpm exec"
+            RUN_CMD="pnpm run"
             ;;
           *)
             echo "Unknown package manager type"
             exit 1
             ;;
         esac
-        # Print outputs
+        # Prints the outputs
         echo "Using package manager: ${PKG_BIN}"
-        echo "pkg-bin=${PKG_BIN}" >> $GITHUB_OUTPUT
-        echo "Using install command: ${INSTALL_CMD}"
-        echo "install-command=${INSTALL_CMD}" >> $GITHUB_OUTPUT
+        # Setting output variables
+        echo "bin=${PKG_BIN}" >> $GITHUB_OUTPUT
+        echo "install-cmd=${INSTALL_CMD}" >> $GITHUB_OUTPUT
+        echo "exec-cmd=${EXEC_CMD}" >> $GITHUB_OUTPUT
+        echo "run-cmd=${RUN_CMD}" >> $GITHUB_OUTPUT
