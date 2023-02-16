@@ -30,7 +30,8 @@ runs:
         LOCAL_CACHE_DIR="${{ inputs.cache-path }}"
         
         # For Gradle
-        mkdir -p "${LOCAL_CACHE_DIR}/gradle" \
+        mkdir -p "${SHARED_CACHE_DIR}" \
+          "${LOCAL_CACHE_DIR}/gradle" \
           "${LOCAL_CACHE_DIR}/go" \
           "${LOCAL_CACHE_DIR}/yarn"
         echo "GRADLE_USER_HOME=${LOCAL_CACHE_DIR}/gradle" >> $GITHUB_ENV
