@@ -20,18 +20,18 @@ runs:
       id: load-cache
       shell: bash
       run: |
-        # Loading build caches
-        if ! [[ -d "${{ inputs.shared-cache-path }}" ]]; then 
-          echo "Shared cache path is not exist. Skip loading cache."
-          exit 0
-        fi
         # setup cache dirs
         SHARED_CACHE_DIR="${{ inputs.shared-cache-path }}/${{ inputs.app-name }}"
         LOCAL_CACHE_DIR="${{ inputs.cache-path }}"
         
+        # Loading build caches
+        if ! [[ -d "${SHARED_CACHE_DIR}" ]]; then 
+          echo "Shared cache path is not exist. Skip loading cache."
+          exit 0
+        fi
+        
         # For Gradle
-        mkdir -p "${SHARED_CACHE_DIR}" \
-          "${LOCAL_CACHE_DIR}/gradle" \
+        mkdir -p "${LOCAL_CACHE_DIR}/gradle" \
           "${LOCAL_CACHE_DIR}/go" \
           "${LOCAL_CACHE_DIR}/yarn"
         echo "GRADLE_USER_HOME=${LOCAL_CACHE_DIR}/gradle" >> $GITHUB_ENV
