@@ -34,24 +34,9 @@ env:
   CI: true
 
 jobs:
-  check-comment:
-    runs-on: [self-hosted, Linux, X64, cache]
-    if: github.event.action != 'closed'
-    outputs:
-      triggered: ${{ steps.check.outputs.triggered }}
-      extra_args: ${{ steps.check.outputs.extra_args }}
-    steps:
-      - uses: bucketplace/comment-trigger@v1.0
-        id: check
-        with:
-          trigger: '/snapshot'
-          reaction: rocket
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   publish:
     name: Run Changesets prerelease
     runs-on: [self-hosted, Linux, X64, cache, node-16]
-    needs: check-comment
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}
