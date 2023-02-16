@@ -36,6 +36,7 @@ runs:
       run: |
         # Try to infer which package manager currently in use if not specified
         NODEJS_PACKAGE_MANAGER="${{ inputs.package-manager }}"
+        echo "current dir: $(pwd)"
         if [[ "${NODEJS_PACKAGE_MANAGER}" == "" ]]; then
           if [[ -f "${{ inputs.app-path }}/yarn.lock" ]]; then
             if [[ -d "${{ inputs.app-path }}/.yarn/" ]]; then
