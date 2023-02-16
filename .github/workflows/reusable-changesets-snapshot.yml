@@ -35,7 +35,7 @@ env:
 
 jobs:
   publish:
-    name: Run Changesets prerelease
+    name: Run Changesets snapshot
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     defaults:
       run:
