@@ -45,7 +45,7 @@ jobs:
         run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
       - name: Determine which package manager to use
         id: pkg-manager
-        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
+        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@feature/SC-59
         with:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
