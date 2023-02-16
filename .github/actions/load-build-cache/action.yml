@@ -29,6 +29,16 @@ runs:
           echo "Shared cache path is not exist. Skip loading cache."
           exit 0
         fi
+
+        if ! [[ -f "${SHARED_CACHE_DIR}/cache.key" ]]; then
+          echo "Shared cache key is not exist. Skip loading cache."
+          exit 0
+        fi
+
+        if ! [[ -f "${SHARED_CACHE_DIR}/main.tar.zst" ]]; then
+          echo "Compressed Shared cache file is not exist. Skip loading cache."
+          exit 0
+        fi
         
         # For Gradle
         mkdir -p "${LOCAL_CACHE_DIR}/gradle" \
