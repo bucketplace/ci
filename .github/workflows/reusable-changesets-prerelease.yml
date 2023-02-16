@@ -1,4 +1,5 @@
 name: "Prerelease Packages"
+
 on:
   workflow_call:
     inputs:
@@ -27,6 +28,7 @@ on:
         required: false
         default: 'pre'
         type: string
+
 env:
   NODE_ENV: production
   CI: true
