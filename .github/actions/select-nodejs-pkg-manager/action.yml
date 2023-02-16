@@ -2,6 +2,11 @@ name: "Select Node.js Package Manager"
 description: "Selects a package manager to use by running resolution logic"
 
 inputs:
+  app-path:
+    description: "Specifies a base directory to run the task from"
+    required: false
+    default: '.'
+    type: string
   package-manager:
     description: "Specifies which package manager to use"
     required: false
@@ -32,13 +37,13 @@ runs:
         # Try to infer which package manager currently in use if not specified
         NODEJS_PACKAGE_MANAGER="${{ inputs.package-manager }}"
         if [[ "${NODEJS_PACKAGE_MANAGER}" == "" ]]; then
-          if [[ -f "yarn.lock" ]]; then
-            if [[ -d ".yarn/" ]]; then
+          if [[ -f "${{ inputs.app-path }}/yarn.lock" ]]; then
+            if [[ -d "${{ inputs.app-path }}/.yarn/" ]]; then
               NODEJS_PACKAGE_MANAGER="yarn"
             else
               NODEJS_PACKAGE_MANAGER="yarn-legacy"
             fi
-          elif [[ -f "pnpm-lock.yaml" ]]; then
+          elif [[ -f "${{ inputs.app-path }}/pnpm-lock.yaml" ]]; then
             NODEJS_PACKAGE_MANAGER="pnpm"
           else
             NODEJS_PACKAGE_MANAGER="npm"

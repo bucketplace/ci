@@ -6,7 +6,7 @@ on:
       app-path:
         description: "Specifies a base directory to run the task from"
         required: false
-        default: './'
+        default: '.'
         type: string
       nodejs-version:
         description: "Specifies which Node.js version to use"
@@ -49,6 +49,7 @@ jobs:
         id: package-manager
         uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
         with:
+          app-path: ${{ inputs.app-path }}
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
         run: ${{ steps.package-manager.outputs.install-command }}

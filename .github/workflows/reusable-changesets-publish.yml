@@ -6,7 +6,7 @@ on:
       app-path:
         description: "Specifies a base directory to run the task from"
         required: false
-        default: './'
+        default: '.'
         type: string
       nodejs-version:
         description: "Specifies which Node.js version to use"
