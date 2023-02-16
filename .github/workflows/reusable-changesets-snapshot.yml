@@ -34,7 +34,7 @@ env:
   CI: true
 
 jobs:
-  publish:
+  snapshot:
     name: Run Changesets snapshot
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     defaults:

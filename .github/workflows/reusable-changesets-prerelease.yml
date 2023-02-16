@@ -34,7 +34,7 @@ env:
   CI: true
 
 jobs:
-  publish:
+  prerelease:
     name: Run Changesets prerelease
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     defaults:
