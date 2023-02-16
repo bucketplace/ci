@@ -41,6 +41,8 @@ jobs:
       run:
         working-directory: ${{ inputs.app-path }}
     steps:
+      - name: Check out code
+        uses: actions/checkout@v3
       - name: Use Node.js ${{ inputs.nodejs-version }}
         run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
       - name: Determine which package manager to use
