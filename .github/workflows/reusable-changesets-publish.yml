@@ -53,7 +53,7 @@ jobs:
           NPM_TOKEN: ${{ secrets.NEXUS_NPM_TOKEN }}
       - name: Determine which package manager to use
         id: pkg-manager
-        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@feature/SC-59
+        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
         with:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
