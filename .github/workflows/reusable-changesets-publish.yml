@@ -57,14 +57,14 @@ jobs:
         with:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
-        run: ${{ env.PKG_CMD_INSTALL }}
+        run: ${{ steps.pkg-manager.outputs.install-cmd }}
       - name: Build packages
-        run: ${{ env.PKG_CMD_RUN }} ${{ inputs.build-command }}
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
       - name: Try to exit Changesets prerelease mode
-        uses: ${{ env.PKG_CMD_EXEC }} changeset pre exit
+        uses: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset pre exit
       - name: Publish package
         uses: changesets/action@v1
         with:
-          publish: ${{ env.PKG_CMD_EXEC }} changeset publish
+          publish: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

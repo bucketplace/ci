@@ -62,17 +62,17 @@ jobs:
         with:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
-        run: ${{ env.PKG_CMD_INSTALL }}
+        run: ${{ steps.pkg-manager.outputs.install-cmd }}
       - name: Enter prerelease Mode
-        run: ${{ env.PKG_CMD_EXEC }} changeset pre enter ${{ inputs.prerelease-tag }}
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset pre enter ${{ inputs.prerelease-tag }}
       - name: Bump version for prerelease
-        run: ${{ env.PKG_CMD_EXEC }} changeset version
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build packages
-        run: ${{ env.PKG_CMD_RUN }} ${{ inputs.build-command }}
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
       - name: Publish prerelease version
-        run: ${{ env.PKG_CMD_EXEC }} changeset publish
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset publish
       - name: Commit
         uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
         with:

@@ -62,12 +62,12 @@ jobs:
         with:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
-        run: ${{ env.PKG_CMD_INSTALL }}
+        run: ${{ steps.pkg-manager.outputs.install-cmd }}
       - name: Build packages
-        run: ${{ env.PKG_CMD_RUN }} ${{ inputs.build-command }}
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
       - name: Change version for snapshot
-        run: ${{ env.PKG_CMD_EXEC }} changeset version --snapshot ${{ inputs.snapshot-tag }}
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset version --snapshot ${{ inputs.snapshot-tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Publish snapshot
-        run: ${{ env.PKG_CMD_EXEC }} changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag
