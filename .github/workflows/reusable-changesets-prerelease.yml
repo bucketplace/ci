@@ -28,6 +28,13 @@ on:
         required: false
         default: 'pre'
         type: string
+    secrets:
+      GITHUB_TOKEN:
+        description: "GitHub's default token for the current repository"
+        required: true
+      NEXUS_NPM_TOKEN:
+        description: "A Nexus NPM token for publishing packages"
+        required: true
 
 env:
   NODE_ENV: production
