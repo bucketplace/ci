@@ -1,0 +1,89 @@
+name: "Select Node.js Package Manager"
+description: "Selects a package manager to use by running resolution logic"
+
+inputs:
+  app-path:
+    description: "Specifies a base directory to run the task from"
+    required: false
+    default: '.'
+    type: string
+  package-manager:
+    description: "Specifies which package manager to use"
+    required: false
+    default: ""
+    type: string
+
+outputs:
+  bin:
+    description: "The package manager binary name"
+    value: ${{ steps.determine-package-manager.outputs.bin }}
+  install-cmd:
+    description: "A command that can be used to install Node.js modules in CI mode"
+    value: ${{ steps.determine-package-manager.outputs.install-command }}
+  exec-cmd:
+    description: "A command prefix that can be used to execute bin modules in node_modules/.bin"
+    value: ${{ steps.determine-package-manager.outputs.exec-cmd }}
+  run-cmd:
+    description: "A command prefix that can be used to run scripts in package.json"
+    value: ${{ steps.determine-package-manager.outputs.run-command }}
+
+runs:
+  using: composite
+  steps:
+    - name: Determine which package manager to use
+      id: determine-package-manager
+      shell: bash
+      run: |
+        # Try to infer which package manager currently in use if not specified
+        NODEJS_PACKAGE_MANAGER="${{ inputs.package-manager }}"
+        if [[ "${NODEJS_PACKAGE_MANAGER}" == "" ]]; then
+          if [[ -f "${{ inputs.app-path }}/yarn.lock" ]]; then
+            if [[ -d "${{ inputs.app-path }}/.yarn/" ]]; then
+              NODEJS_PACKAGE_MANAGER="yarn"
+            else
+              NODEJS_PACKAGE_MANAGER="yarn-legacy"
+            fi
+          elif [[ -f "${{ inputs.app-path }}/pnpm-lock.yaml" ]]; then
+            NODEJS_PACKAGE_MANAGER="pnpm"
+          else
+            NODEJS_PACKAGE_MANAGER="npm"
+          fi
+        fi
+        # Prepares for outputs
+        case $NODEJS_PACKAGE_MANAGER in
+          npm)
+            PKG_BIN="npm"
+            INSTALL_CMD="npm ci"
+            EXEC_CMD="npm exec --"
+            RUN_CMD="npm run"
+            ;;
+          yarn)
+            PKG_BIN="yarn"
+            INSTALL_CMD="yarn install --immutable"
+            EXEC_CMD="yarn exec"
+            RUN_CMD="yarn run"
+            ;;
+          yarn-legacy)
+            PKG_BIN="yarn"
+            INSTALL_CMD="yarn install --frozen-lockfile"
+            EXEC_CMD="npm exec --" # Yarn Legacy doesn't have exec command, so borrowing it from npm here
+            RUN_CMD="yarn run"
+            ;;
+          pnpm)
+            PKG_BIN="pnpm"
+            INSTALL_CMD="pnpm install --frozen-lockfile"
+            EXEC_CMD="pnpm exec"
+            RUN_CMD="pnpm run"
+            ;;
+          *)
+            echo "Unknown package manager type"
+            exit 1
+            ;;
+        esac
+        # Prints the outputs
+        echo "Using package manager: ${PKG_BIN}"
+        # Setting output variables
+        echo "bin=${PKG_BIN}" >> $GITHUB_OUTPUT
+        echo "install-cmd=${INSTALL_CMD}" >> $GITHUB_OUTPUT
+        echo "exec-cmd=${EXEC_CMD}" >> $GITHUB_OUTPUT
+        echo "run-cmd=${RUN_CMD}" >> $GITHUB_OUTPUT

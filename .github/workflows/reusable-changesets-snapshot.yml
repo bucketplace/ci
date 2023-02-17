@@ -1,4 +1,4 @@
-name: "Check Node.js"
+name: "Snapshot Packages"
 
 on:
   workflow_call:
@@ -18,24 +18,28 @@ on:
         required: false
         default: ''
         type: string
-      test-command:
-        description: "Specifies a test command that will be passed to the package manager"
+      build-command:
+        description: "Specifies a build command used on package finalizing before publish"
         required: false
-        default: 'test'
+        default: 'build'
         type: string
-      test-command-args:
-        description: "Specifies an optional arguments to the test command"
+      snapshot-tag:
+        description: "Specifies a tag name that is used for snapshot release"
         required: false
-        default: ''
+        default: 'snap'
         type: string
+    secrets:
+      NEXUS_NPM_TOKEN:
+        description: "A Nexus NPM token for publishing packages"
+        required: true
 
 env:
-  NODE_ENV: development # This must always be set. Otherwise, required dependencies to run test will not be installed or inconsistency happens.
+  NODE_ENV: production
   CI: true
 
 jobs:
-  run-test:
-    name: Run Node.js test
+  snapshot:
+    name: Run Changesets snapshot
     runs-on: [self-hosted, Linux, X64, cache, node-16]
     defaults:
       run:
@@ -45,13 +49,25 @@ jobs:
         uses: actions/checkout@v3
       - name: Use Node.js ${{ inputs.nodejs-version }}
         run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
+      - name: Configure registry
+        run: |
+          cat <<EOF > "$HOME/.npmrc"
+            //nexus.co-workerhou.se/repository/npm-private/:_authToken=$NPM_TOKEN
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NEXUS_NPM_TOKEN }}
       - name: Determine which package manager to use
         id: pkg-manager
         uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
         with:
-          app-path: ${{ inputs.app-path }}
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
         run: ${{ steps.pkg-manager.outputs.install-cmd }}
-      - name: Run test
-        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
+      - name: Build packages
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
+      - name: Change version for snapshot
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset version --snapshot ${{ inputs.snapshot-tag }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish snapshot
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag
