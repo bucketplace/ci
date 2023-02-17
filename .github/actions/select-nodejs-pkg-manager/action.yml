@@ -19,13 +19,13 @@ outputs:
     value: ${{ steps.determine-package-manager.outputs.bin }}
   install-cmd:
     description: "A command that can be used to install Node.js modules in CI mode"
-    value: ${{ steps.determine-package-manager.outputs.install-command }}
+    value: ${{ steps.determine-package-manager.outputs.install-cmd }}
   exec-cmd:
     description: "A command prefix that can be used to execute bin modules in node_modules/.bin"
     value: ${{ steps.determine-package-manager.outputs.exec-cmd }}
   run-cmd:
     description: "A command prefix that can be used to run scripts in package.json"
-    value: ${{ steps.determine-package-manager.outputs.run-command }}
+    value: ${{ steps.determine-package-manager.outputs.run-cmd }}
 
 runs:
   using: composite
