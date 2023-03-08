@@ -36,6 +36,11 @@ on:
         description: "enable sonarqube quality gates"
         required: false
         default: true
+      jacoco-reports:
+        type: string
+        description: "jacoco report files, comma separated"
+        required: false
+        default: ""
     secrets:
       SONAR_TOKEN:
         required: false
@@ -122,7 +127,7 @@ jobs:
         name: Add coverage to PR
         uses: madrapps/jacoco-report@v1.3
         with:
-          paths: ${{ inputs.app-path }}/build/reports/jacoco/test/jacocoTestReport.xml
+          paths: ${{ (inputs.jacoco-reports != '' && inputs.jacoco-reports) || format('{0}/build/reports/jacoco/test/jacocoTestReport.xml', inputs.app-path) }}
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 70
           min-coverage-changed-files: 70
