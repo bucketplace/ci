@@ -40,8 +40,8 @@ runs:
       run: |
         LATEST_TAG="${{ steps.find-latest-tag.outputs.tag }}"
         LATEST_VERSION="${LATEST_TAG#${{ inputs.app-name }}-v}"
-        echo "::set-output name=tag::${LATEST_TAG}"
-        echo "::set-output name=version::${LATEST_VERSION}"
+        echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+        echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
       shell: bash
     - name: Get Next SemVer
       id: next-semver
@@ -59,6 +59,6 @@ runs:
           GEN_VERSION="${{ steps.next-semver.outputs.major }}"
         fi
         GEN_TAG="${{ inputs.app-name }}-v${GEN_VERSION}"
-        echo "::set-output name=tag::${GEN_TAG}"
-        echo "::set-output name=version::${GEN_VERSION}"
+        echo "tag=${GEN_TAG}" >> $GITHUB_OUTPUT
+        echo "version=${GEN_VERSION}" >> $GITHUB_OUTPUT
       shell: bash
