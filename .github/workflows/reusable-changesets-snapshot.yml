@@ -35,7 +35,7 @@ on:
 
 outputs:
   pkg-version-name-pairs:
-    description: "The package metadata with (version, name) pairs in CSV format"
+    description: "The package metadata with (name, version) pairs in CSV format"
     value: ${{ steps.pkg-name-version-pairs.outputs.message }}
 
 env:
