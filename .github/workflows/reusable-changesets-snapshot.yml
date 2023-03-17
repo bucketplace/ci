@@ -77,6 +77,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Store metadata for released packages
         id: pkg-name-version-pairs
-        run: echo "message=$(git ls-files -m | grep package.json | xargs -I{} sh -c "node -e \"const pkg = require('./{}');console.log([pkg.name, pkg.version].join())\"")" >> "$GITHUB_OUTPUT"
+        run: echo "message=$(git ls-files -m | grep package.json | xargs -I{} sh -c "node -e \"const pkg = require('./{}');console.log([pkg.name, pkg.version].join())\"")" >> $GITHUB_OUTPUT
       - name: Publish snapshot
         run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag
