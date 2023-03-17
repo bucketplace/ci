@@ -28,15 +28,14 @@ on:
         required: false
         default: 'snap'
         type: string
+    outputs:
+      pkg-version-name-pairs:
+        description: "The package metadata with (name, version) pairs in CSV format"
+        value: ${{ steps.pkg-name-version-pairs.outputs.message }}
     secrets:
       NEXUS_NPM_TOKEN:
         description: "A Nexus NPM token for publishing packages"
         required: true
-
-outputs:
-  pkg-version-name-pairs:
-    description: "The package metadata with (name, version) pairs in CSV format"
-    value: ${{ steps.pkg-name-version-pairs.outputs.message }}
 
 env:
   NODE_ENV: production
