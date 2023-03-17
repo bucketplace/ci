@@ -33,6 +33,11 @@ on:
         description: "A Nexus NPM token for publishing packages"
         required: true
 
+outputs:
+  pkg-version-name-pairs:
+    description: "The package metadata with (version, name) pairs in CSV format"
+    value: ${{ steps.pkg-name-version-pairs.outputs.message }}
+
 env:
   NODE_ENV: production
   CI: true
@@ -69,5 +74,8 @@ jobs:
         run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset version --snapshot ${{ inputs.snapshot-tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Store metadata for released packages
+        id: pkg-name-version-pairs
+        run: echo "message=$(git ls-files -m | grep package.json | xargs -I{} sh -c "node -e \"const pkg = require('./{}');console.log([pkg.name, pkg.version].join())\"")" >> "$GITHUB_OUTPUT"
       - name: Publish snapshot
         run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag
