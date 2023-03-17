@@ -31,7 +31,7 @@ on:
     outputs:
       pkg-version-name-pairs:
         description: "The package metadata with (name, version) pairs in CSV format"
-        value: ${{ steps.pkg-name-version-pairs.outputs.message }}
+        value: ${{ jobs.snapshot.outputs.pkg-version-name-pairs }}
     secrets:
       NEXUS_NPM_TOKEN:
         description: "A Nexus NPM token for publishing packages"
@@ -48,6 +48,8 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}
+    outputs:
+      pkg-version-name-pairs: ${{ steps.pkg-name-version-pairs.outputs.message }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
