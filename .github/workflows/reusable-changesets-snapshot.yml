@@ -23,11 +23,20 @@ on:
         required: false
         default: 'build'
         type: string
+      branch:
+        description: "Specifies which branch ref to use on checkout"
+        required: false
+        default: ${{ github.ref }}
+        type: string
       snapshot-tag:
         description: "Specifies a tag name that is used for snapshot release"
         required: false
         default: 'snap'
         type: string
+    outputs:
+      pkg-version-name-pairs:
+        description: "The package metadata with (name, version) pairs in CSV format"
+        value: ${{ jobs.snapshot.outputs.pkg-version-name-pairs }}
     secrets:
       NEXUS_NPM_TOKEN:
         description: "A Nexus NPM token for publishing packages"
@@ -44,9 +53,13 @@ jobs:
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}
+    outputs:
+      pkg-version-name-pairs: ${{ steps.pkg-name-version-pairs.outputs.message }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.branch }}
       - name: Use Node.js ${{ inputs.nodejs-version }}
         run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
       - name: Configure registry
@@ -69,5 +82,8 @@ jobs:
         run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset version --snapshot ${{ inputs.snapshot-tag }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Store metadata for released packages
+        id: pkg-name-version-pairs
+        run: echo "message=$(git ls-files -m | grep package.json | xargs -I{} sh -c "node -e \"const pkg = require('./{}');console.log([pkg.name, pkg.version].join())\"")" >> $GITHUB_OUTPUT
       - name: Publish snapshot
         run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset publish --tag ${{ inputs.snapshot-tag }} --snapshot --no-git-tag
