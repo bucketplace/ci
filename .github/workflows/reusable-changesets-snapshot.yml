@@ -23,7 +23,7 @@ on:
         required: false
         default: 'build'
         type: string
-      checkout-ref:
+      branch:
         description: "Specifies which branch ref to use on checkout"
         required: false
         default: ${{ github.ref }}
@@ -58,6 +58,8 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.checkout-ref }}
       - name: Use Node.js ${{ inputs.nodejs-version }}
         run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
       - name: Configure registry
