@@ -23,6 +23,11 @@ on:
         required: false
         default: 'build'
         type: string
+      checkout-ref:
+        description: "Specifies which branch ref to use on checkout"
+        required: false
+        default: ${{ github.ref }}
+        type: string
       snapshot-tag:
         description: "Specifies a tag name that is used for snapshot release"
         required: false
