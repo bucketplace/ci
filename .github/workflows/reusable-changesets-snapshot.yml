@@ -59,7 +59,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.checkout-ref }}
+          ref: ${{ inputs.branch }}
       - name: Use Node.js ${{ inputs.nodejs-version }}
         run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
       - name: Configure registry
