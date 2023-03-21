@@ -1,0 +1,89 @@
+name: "Snapshot Packages with Comments"
+
+on:
+  workflow_call:
+    inputs:
+      app-path:
+        description: "Specifies a base directory to run the task from"
+        required: false
+        default: '.'
+        type: string
+      nodejs-version:
+        description: "Specifies which Node.js version to use"
+        required: false
+        default: '16'
+        type: string
+      package-manager:
+        description: "Specifies which package manager to use"
+        required: false
+        default: ''
+        type: string
+      build-command:
+        description: "Specifies a build command used on package finalizing before publish"
+        required: false
+        default: 'build'
+        type: string
+      snapshot-tag:
+        description: "Specifies a tag name that is used for snapshot release"
+        required: false
+        default: 'snap'
+        type: string
+    secrets:
+      NEXUS_NPM_TOKEN:
+        description: "A Nexus NPM token for publishing packages"
+        required: true
+
+env:
+  NODE_ENV: production
+  CI: true
+
+jobs:
+  check-comment:
+    name: Check /snapshot comment
+    runs-on: [self-hosted, Linux, X64, no-cache]
+    if: github.event.action != 'closed'
+    outputs:
+      triggered: ${{ steps.check.outputs.triggered }}
+      extra_args: ${{ steps.check.outputs.extra_args }}
+    steps:
+      - uses: bucketplace/comment-trigger@v1.0
+        id: check
+        with:
+          trigger: '/snapshot'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  snapshot:
+    name: Snapshot packages
+    needs: check-comment
+    uses: bucketplace/ci/.github/workflows/reusable-changesets-snapshot.yml@latest
+    with:
+      branch: refs/pull/${{ github.event.issue.number }}/head
+      app-path: ${{ inputs.app-path }}
+      nodejs-version: ${{ inputs.nodejs-version }}
+      package-manager: ${{ inputs.package-manager }}
+      build-command: ${{ inputs.build-command }}
+      snapshot-tag: ${{ inputs.snapshot-tag }}
+    secrets: inherit
+  notify-release:
+    name: Notify release
+    runs-on: [self-hosted, Linux, X64, no-cache]
+    needs: snapshot
+    steps:
+      - name: Format metadata of released packages into commands
+        id: package-list
+        run: |
+          PKG_LIST=$(echo '${{ needs.snapshot.outputs.pkg-version-name-pairs }}' | while IFS=',' read -r package version; do echo "yarn add $package@$version"; done)
+          echo "message=${PKG_LIST}" >> $GITHUB_OUTPUT
+      - name: Comment on PR
+        uses: bucketplace/pull-request-add-comment-action@main
+        with:
+          message: |-
+            📦 **패키지의 snapshot 배포가 완료되었습니다.** 배포된 패키지는 다음 커맨드로 설치할 수 있습니다:
+
+            **Note:** Mono-repo 저장소인 경우 여러 패키지가 한 번에 표시될 수 있습니다.
+
+            ```shell
+            ${{ steps.package-list.outputs.message }}
+            ```
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
