@@ -1,14 +1,22 @@
 name: "Release CI Workflows and Actions"
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      increment:
+        type: choice
+        description: 'Increment version of release (major, minor, patch)'
+        required: true
+        default: 'patch'
+        choices:
+          - 'major'
+          - 'minor'
+          - 'patch'
 
 jobs:
   release-self:
     name: Run release on self
-    runs-on: [self-hosted, Linux, X64, no-cache]
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v3
@@ -17,20 +25,26 @@ jobs:
         id: version
         with:
           scheme: semver
-          increment: major
+          increment: ${{ github.event.inputs.increment }}
       - name: Create release
         uses: ncipollo/release-action@v1.12.0
         with:
           allowUpdates: true
           makeLatest: true
           generateReleaseNotes: true
-          name: ${{ steps.version.outputs.major-v-version }}
-          tag: ${{ steps.version.outputs.major-v-version }}
-          token: ${{ github.token }}
+          name: ${{ steps.version.outputs.v-version }}
+          tag: ${{ steps.version.outputs.v-version }}
+      - name: Update major git tag to HEAD
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: "${{ steps.version.outputs.major-v-version }}"
+          force_push_tag: true
+          tag_exists_error: false
+          message: "${{ steps.version.outputs.major-v-version }} release: ${{ steps.version.outputs.v-version }}"
       - name: Update Git tag 'latest' to HEAD
         uses: rickstaa/action-create-tag@v1
         with:
           tag: "latest"
           force_push_tag: true
           tag_exists_error: false
-          message: "Latest release: ${{ steps.version.outputs.major-v-version }}"
+          message: "Latest release: ${{ steps.version.outputs.v-version }}"
