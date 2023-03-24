@@ -32,7 +32,6 @@ jobs:
 
 재사용 가능한 액션 리스트는 [.github/actions/*](https://github.com/bucketplace/ci/tree/main/.github/actions) 폴더를 참조하세요
 
-
 ## How to Release new Version
 ```
  🚨 Github의 Release 기능을 이용하여 수동으로 release 하시면 안됩니다!
