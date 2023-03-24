@@ -23,6 +23,7 @@ jobs:
 ```
 
 필요에 따라 `latest`(사용 추천), `v1`(필요시), `rc`(야수의 심장 소유자) 등의 버전을 사용할 수 있습니다.
+
 ## Workflows & Actions
 
 재사용 가능한 워크플로우 리스트는 [.github/workflows/*](https://github.com/bucketplace/ci/tree/main/.github/workflows) 폴더를 참조하세요.
