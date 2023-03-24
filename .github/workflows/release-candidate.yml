@@ -1,0 +1,21 @@
+name: "Tag Release Candidate"
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag-release-candidate:
+    name: Tag release candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Update Git tag 'rc' to HEAD
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: "rc"
+          force_push_tag: true
+          tag_exists_error: false
+          message: "Release Candidate"
