@@ -121,8 +121,9 @@ jobs:
           cd ${{ inputs.app-path }} && \
           ginkgo -p --race --trace --cover --coverprofile=coverage.txt ./... && \
           gocov convert coverage.txt | gocov-xml > coverage.xml
+          ls -al
       - name: Create Coverage Information
-        if: always() && github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request'
         uses: irongut/CodeCoverageSummary@v1.3.0
         with:
           filename: "${{ inputs.app-path }}/coverage.xml"
@@ -135,7 +136,6 @@ jobs:
           output: file
           thresholds: ${{ inputs.coverage-threshold }}
       - name: SonarQube Scanner Parameters Config
-        if: always()
         id: sonarqube-params
         uses: philips-software/sonar-scanner-action@v1.5.1
         with:
