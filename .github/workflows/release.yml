@@ -8,7 +8,7 @@ on:
         description: 'Increment version of release (major, minor, patch)'
         required: true
         default: 'patch'
-        choices:
+        options:
           - 'major'
           - 'minor'
           - 'patch'
