@@ -21,7 +21,6 @@ on:
         type: string
         description: go 버전
         required: false
-        default: "1.18"
       filter-mode:
         type: string
         description: reviewdog 결과 필터링 모드. [added, diff_context, file, nofilter] 중 하나
@@ -66,12 +65,13 @@ jobs:
           GONOSUMDB: "go.dailyhou.se"
         with:
           reviewdog_version: latest # Optional. [latest,nightly,v.X.Y.Z]
+          workdir: ${{ inputs.app-path }}
           go_version: ${{ inputs.go-version }}
+          go_version_file: ${{ inputs.app-path}}/go.mod
           reporter: ${{ inputs.reporter }}
           filter_mode: ${{ inputs.filter-mode }}
           fail_on_error: true
-          workdir: ${{ inputs.app-path }}
-          golangci_lint_version: v1.50.1
+          golangci_lint_version: v1.52.2 # last update: 2023.03.29
           golangci_lint_flags: |
             --config=${{ inputs.lint-config }} ./...
 
@@ -95,11 +95,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4
         with:
           cache: true
           cache-dependency-path: ${{ inputs.app-path }}/go.sum
-          go-version: ^${{ inputs.go-version }}
+          go-version-file: ${{ inputs.app-path }}/go.mod
+          go-version: ${{ inputs.go-version }}
       - name: Granting private modules access
         env:
           TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
@@ -112,13 +113,13 @@ jobs:
           go env -w GONOSUMDB=go.dailyhou.se && \
           go install github.com/axw/gocov/gocov@latest && \
           go install github.com/AlekSi/gocov-xml@latest && \
-          go install github.com/onsi/ginkgo/v2/ginkgo@v2.5.1
+          cd ${{ inputs.app-path }} && go install github.com/onsi/ginkgo/v2/ginkgo
 
       - name: Test
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH && \
           cd ${{ inputs.app-path }} && \
-          ginkgo -p --race --trace --cover --coverprofile=coverage.txt ./... && \
+          ginkgo -p --race --trace --cover --coverprofile=coverage.txt ./...
           gocov convert coverage.txt | gocov-xml > coverage.xml
       - name: Create Coverage Information
         if: always() && github.event_name == 'pull_request'
