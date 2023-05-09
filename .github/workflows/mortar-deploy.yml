@@ -14,24 +14,31 @@ on:
         required: false
     inputs:
       aws-region:
+        type: string
         description: "AWS Region for ECR"
         default: ap-northeast-2
       nexus-url:
+        type: string
         description: "Nexus URL where all the packages are published"
         default: "https://nexus.co-workerhou.se"
-      prod:
-        description: "is production or not"
-        default: "false"
       config:
+        type: string
         description: "path of mortar config"
         default: "./mortar.yaml"
+      prod:
+        type: string
+        description: "is production or not"
+        default: "false"
       dry-run:
+        type: string
         description: "runs the deployment without actual publication"
         default: "false"
       create-ecr-repo:
+        type: string
         description: "creates ECR repository if it is not existed"
         default: "false"
       override-version:
+        type: string
         description: "if it set, it overrides app version on the mortar.yaml file"
         default: ""
 
