@@ -44,25 +44,25 @@ on:
 
 
 jobs:
-  mortar-deploy:
-    name: Mortar Deploy
+  mortar:
+    name: Mortar
     runs-on: [ self-hosted, Linux, X64, mortar-runner ]
     outputs:
       app-version:
         description: "version of deployed package and docker image(tag)"
-        value: ${{steps.mortar-deploy.outputs.version }}
+        value: ${{ steps.mortar-deploy.outputs.version }}
       app-name:
         description: "name of deployed package from mortar config"
-        value: ${{steps.mortar-deploy.outputs.app-name }}
+        value: ${{ steps.mortar-deploy.outputs.app-name }}
       namespace:
         description: "namespace of deployed package from mortar config"
-        value: ${{steps.mortar-deploy.outputs.namespace }}
+        value: ${{ steps.mortar-deploy.outputs.namespace }}
       owner:
         description: "owner team of deployed package from mortar config"
-        value: ${{steps.mortar-deploy.outputs.owner }}
+        value: ${{ steps.mortar-deploy.outputs.owner }}
       repo-name:
         description: "repository name where the image has deployed"
-        value: ${{steps.mortar-deploy.outputs.repo-name }}
+        value: ${{ steps.mortar-deploy.outputs.repo-name }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
@@ -77,7 +77,7 @@ jobs:
         id: extract-app-name
         uses: mikefarah/yq@4
         with:
-          cmd: yq '.name' ${{inputs.config}}
+          cmd: yq '.name' ${{ inputs.config }}
       - name: Load Build Cache
         id: load-build-cache
         uses: bucketplace/ci/.github/actions/load-build-cache@main
