@@ -1,0 +1,118 @@
+name: mortar-deploy-action
+description: Github action for deploy a mortar project
+author: "Core Platform <eng-core-platform@bucketplace.net>"
+
+on:
+  workflow_call:
+    inputs:
+    aws-access-key-id:
+      description: "AWS Access Key Id for ECR"
+      required: true
+    aws-secret-access-key:
+      description: "AWS Secret Access Key for ECR"
+      required: true
+    aws-region:
+      description: "AWS Region for ECR"
+      required: true
+      default: ap-northeast-2
+    nexus-url:
+      description: "Nexus URL where all the packages are published"
+      required: true
+      default: "https://nexus.co-workerhou.se"
+    nexus-user:
+      description: "Nexus User ID:PW that has permission to publish packages to maven and npm repositories"
+      required: true
+    prod:
+      description: "is production or not"
+      required: true
+      default: "false"
+    config:
+      description: "path of mortar config"
+      required: false
+      default: "./mortar.yaml"
+    dry-run:
+      description: "runs the deployment without actual publication"
+      required: false
+      default: "false"
+    create-ecr-repo:
+      description: "creates ECR repository if it is not existed"
+      required: false
+      default: "false"
+    go-repo-s3-aws-access-id:
+      description: "access ID of AWS credentials for golang repository bucket, if necessary"
+      required: false
+      default: ""
+    go-repo-s3-aws-secret-key:
+      description: "secret Key of AWS credentials for golang repository bucket, if necessary"
+      required: false
+      default: ""
+    override-version:
+      description: "if it set, it overrides app version on the mortar.yaml file"
+      required: false
+      default: ""
+
+
+jobs:
+  mortar-deploy:
+    name: Mortar Deploy
+    runs-on: [ self-hosted, Linux, X64, mortar-runner ]
+    outputs:
+    app-version:
+      description: "version of deployed package and docker image(tag)"
+      value: ${{steps.mortar-deploy.outputs.version }}
+    app-name:
+      description: "name of deployed package from mortar config"
+      value: ${{steps.mortar-deploy.outputs.app-name }}
+    namespace:
+      description: "namespace of deployed package from mortar config"
+      value: ${{steps.mortar-deploy.outputs.namespace }}
+    owner:
+      description: "owner team of deployed package from mortar config"
+      value: ${{steps.mortar-deploy.outputs.owner }}
+    repo-name:
+      description: "repository name where the image has deployed"
+      value: ${{steps.mortar-deploy.outputs.repo-name }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ inputs.aws-access-key-id }}
+          aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+          aws-region: ${{ inputs.aws-region }}
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+      - name: Extract App name
+        id: extract-app-name
+        uses: mikefarah/yq@4
+        with:
+          cmd: yq '.name' ${{inputs.config}}
+      - name: Load Build Cache
+        id: load-build-cache
+        uses: bucketplace/ci/.github/actions/load-build-cache@main
+        with:
+          app-name: ${{ steps.extract-app-name.outputs.result }}
+      - name: Mortar Deployment
+        shell: bash
+        id: mortar-deploy
+        env:
+          DEBUG: true
+        run: |
+          mortar deploy -y \
+          --nexus-user="${{ inputs.nexus-user }}" \
+          --nexus-url="${{ inputs.nexus-url }}" \
+          --prod=${{ inputs.prod }} \
+          --config="${{ inputs.config }}" \
+          --ecr-repository-region=${{ inputs.aws-region }} \
+          --ecr-repository-url="${{ steps.login-ecr.outputs.registry }}" \
+          --dry-run=${{ inputs.dry-run }} \
+          --create-ecr-repo=${{ inputs.create-ecr-repo }} \
+          --go-repo-s3-aws-access-id="${{ inputs.go-repo-s3-aws-access-id}}" \
+          --go-repo-s3-aws-secret-key="${{ inputs.go-repo-s3-aws-secret-key}}" \
+          --override-version="${{ inputs.override-version }}" \
+          --github
+      - name: Store Build Cache
+        id: store-build-cache
+        uses: bucketplace/ci/.github/actions/store-build-cache@main
+        with:
+          app-name: ${{ steps.extract-app-name.outputs.result }}
