@@ -1,7 +1,4 @@
-name: mortar-deploy-action
-description: Github action for deploy a mortar project
-author: "Core Platform <eng-core-platform@bucketplace.net>"
-
+name: Mortar Deploy Action
 on:
   workflow_call:
     secrets:
