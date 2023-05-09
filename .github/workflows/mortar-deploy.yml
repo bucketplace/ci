@@ -79,6 +79,8 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+      - name: Checkout code
+        uses: actions/checkout@v3
       - name: Extract App name
         id: extract-app-name
         uses: mikefarah/yq@master
