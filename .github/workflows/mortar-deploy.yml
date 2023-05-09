@@ -81,7 +81,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v1
       - name: Extract App name
         id: extract-app-name
-        uses: mikefarah/yq@4
+        uses: mikefarah/yq@master
         with:
           cmd: yq '.name' ${{ inputs.config }}
       - name: Load Build Cache
