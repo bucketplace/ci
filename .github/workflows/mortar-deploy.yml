@@ -6,20 +6,15 @@ on:
   workflow_call:
     secrets:
       AWS_ACCESS_KEY_ID:
-        description: "AWS Access Key Id for ECR"
         required: true
       AWS_SECRET_ACCESS_KEY:
-        description: "AWS Secret Access Key for ECR"
+        required: true
+      NEXUS_DEPLOY_USERPASS:
         required: true
       GO_REPO_S3_AWS_ACCESS_ID:
-        description: "access ID of AWS credentials for golang repository bucket, if necessary"
         required: false
       GO_REPO_S3_AWS_SECRET_KEY:
-        description: "secret Key of AWS credentials for golang repository bucket, if necessary"
         required: false
-      NEXUS_DEPLOY_USERPASS:
-        description: "Nexus User ID:PW that has permission to publish packages to maven and npm repositories"
-        required: true
     inputs:
       aws-region:
         description: "AWS Region for ECR"
