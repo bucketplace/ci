@@ -41,28 +41,34 @@ on:
         type: string
         description: "if it set, it overrides app version on the mortar.yaml file"
         default: ""
-
-
-jobs:
-  mortar:
-    name: Mortar
-    runs-on: [ self-hosted, Linux, X64, mortar-runner ]
     outputs:
       app-version:
         description: "version of deployed package and docker image(tag)"
-        value: ${{ steps.mortar-deploy.outputs.version }}
+        value: ${{ jobs.mortar-deploy.outputs.version }}
       app-name:
         description: "name of deployed package from mortar config"
-        value: ${{ steps.mortar-deploy.outputs.app-name }}
+        value: ${{ jobs.mortar-deploy.outputs.app-name }}
       namespace:
         description: "namespace of deployed package from mortar config"
-        value: ${{ steps.mortar-deploy.outputs.namespace }}
+        value: ${{ jobs.mortar-deploy.outputs.namespace }}
       owner:
         description: "owner team of deployed package from mortar config"
-        value: ${{ steps.mortar-deploy.outputs.owner }}
+        value: ${{ jobs.mortar-deploy.outputs.owner }}
       repo-name:
         description: "repository name where the image has deployed"
-        value: ${{ steps.mortar-deploy.outputs.repo-name }}
+        value: ${{ jobs.mortar-deploy.outputs.repo-name }}
+
+
+jobs:
+  mortar-deploy:
+    name: Mortar Deploy
+    runs-on: [ self-hosted, Linux, X64, mortar-runner ]
+    outputs:
+      app-version: ${{ steps.mortar-deploy.outputs.version }}
+      app-name: ${{ steps.mortar-deploy.outputs.app-name }}
+      namespace: ${{ steps.mortar-deploy.outputs.namespace }}
+      owner: ${{ steps.mortar-deploy.outputs.owner }}
+      repo-name: ${{ steps.mortar-deploy.outputs.repo-name }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
