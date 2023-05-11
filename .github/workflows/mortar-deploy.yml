@@ -44,7 +44,7 @@ on:
     outputs:
       app-version:
         description: "version of deployed package and docker image(tag)"
-        value: ${{ jobs.mortar-deploy.outputs.version }}
+        value: ${{ jobs.mortar-deploy.outputs.app-version }}
       app-name:
         description: "name of deployed package from mortar config"
         value: ${{ jobs.mortar-deploy.outputs.app-name }}
