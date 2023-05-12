@@ -54,9 +54,6 @@ on:
       owner:
         description: "owner team of deployed package from mortar config"
         value: ${{ jobs.mortar-deploy.outputs.owner }}
-      repo-name:
-        description: "repository name where the image has deployed"
-        value: ${{ jobs.mortar-deploy.outputs.repo-name }}
 
 jobs:
   mortar-deploy:
@@ -67,7 +64,6 @@ jobs:
       app-name: ${{ steps.mortar-deploy.outputs.app-name }}
       namespace: ${{ steps.mortar-deploy.outputs.namespace }}
       owner: ${{ steps.mortar-deploy.outputs.owner }}
-      repo-name: ${{ steps.mortar-deploy.outputs.repo-name }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
