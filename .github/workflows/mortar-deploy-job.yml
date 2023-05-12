@@ -1,0 +1,85 @@
+name: Mortar Deploy Action
+on:
+  workflow_call:
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      NEXUS_DEPLOY_USERPASS:
+        required: true
+      GO_REPO_S3_AWS_ACCESS_ID:
+        required: false
+      GO_REPO_S3_AWS_SECRET_KEY:
+        required: false
+    inputs:
+      aws-region:
+        type: string
+        description: "AWS Region for ECR"
+        default: ap-northeast-2
+      nexus-url:
+        type: string
+        description: "Nexus URL where all the packages are published"
+        default: "https://nexus.co-workerhou.se"
+      config:
+        type: string
+        description: "path of mortar config"
+        default: "./mortar.yaml"
+      prod:
+        type: string
+        description: "is production or not"
+        default: "false"
+      dry-run:
+        type: string
+        description: "runs the deployment without actual publication"
+        default: "false"
+      create-ecr-repo:
+        type: string
+        description: "creates ECR repository if it is not existed"
+        default: "false"
+      override-version:
+        type: string
+        description: "if it set, it overrides app version on the mortar.yaml file"
+        default: ""
+    outputs:
+      app-version:
+        description: "version of deployed package and docker image(tag)"
+        value: ${{ jobs.mortar-deploy.outputs.app-version }}
+      app-name:
+        description: "name of deployed package from mortar config"
+        value: ${{ jobs.mortar-deploy.outputs.app-name }}
+      namespace:
+        description: "namespace of deployed package from mortar config"
+        value: ${{ jobs.mortar-deploy.outputs.namespace }}
+      owner:
+        description: "owner team of deployed package from mortar config"
+        value: ${{ jobs.mortar-deploy.outputs.owner }}
+
+jobs:
+  mortar-deploy:
+    name: Mortar Deploy
+    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    outputs:
+      app-version: ${{ steps.mortar-deploy.outputs.app-version }}
+      app-name: ${{ steps.mortar-deploy.outputs.app-name }}
+      namespace: ${{ steps.mortar-deploy.outputs.namespace }}
+      owner: ${{ steps.mortar-deploy.outputs.owner }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Mortar Deploy
+        id: mortar-deploy
+        uses: bucketplace/ci/.github/actions/mortar-deploy-action@latest
+        with:
+          config: ${{ inputs.config }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ inputs.aws-region }}
+          create-ecr-repo: ${{ inputs.create-ecr-repo }}
+          dry-run: ${{ inputs.dry-run }}
+          go-repo-s3-aws-access-id: ${{ secrets.GO_REPO_S3_AWS_ACCESS_ID }}
+          go-repo-s3-aws-secret-key: ${{ secrets.GO_REPO_S3_AWS_SECRET_KEY }}
+          nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
+          nexus-url: ${{ inputs.nexus-url }}
+          override-version: ${{ inputs.override-version }}
+          prod: ${{ inputs.prod }}
