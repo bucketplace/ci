@@ -8,31 +8,23 @@ inputs:
   aws-secret-access-key:
     description: "AWS Secret Access Key for ECR"
     required: true
-  aws-region:
-    description: "AWS Region for ECR"
-    required: true
-    default: ap-northeast-2
-  nexus-url:
-    description: "Nexus URL where all the packages are published"
-    required: true
-    default: "https://nexus.co-workerhou.se"
   nexus-user:
     description: "Nexus User ID:PW that has permission to publish packages to maven and npm repositories"
     required: true
-  prod:
-    description: "is production or not"
-    required: true
-    default: "false"
+  aws-region:
+    description: "AWS Region for ECR"
+    required: false
+    default: ap-northeast-2
   config:
     description: "path of mortar config"
     required: false
     default: "./mortar.yaml"
-  dry-run:
-    description: "runs the deployment without actual publication"
-    required: false
-    default: "false"
   create-ecr-repo:
     description: "creates ECR repository if it is not existed"
+    required: false
+    default: "false"
+  dry-run:
+    description: "runs the deployment without actual publication"
     required: false
     default: "false"
   go-repo-s3-aws-access-id:
@@ -43,10 +35,18 @@ inputs:
     description: "secret Key of AWS credentials for golang repository bucket, if necessary"
     required: false
     default: ""
+  nexus-url:
+    description: "Nexus URL where all the packages are published"
+    required: false
+    default: "https://nexus.co-workerhou.se"
   override-version:
     description: "if it set, it overrides app version on the mortar.yaml file"
     required: false
     default: ""
+  prod:
+    description: "is production or not"
+    required: false
+    default: "false"
     
 outputs:
   app-version:
