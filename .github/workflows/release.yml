@@ -36,9 +36,12 @@ jobs:
         uses: mikepenz/release-changelog-builder-action@v3
         with:
           fromTag: ${{ steps.get-tag.outputs.current-tag }}
+          toTag: "refs/heads/${{github.event.repository.default_branch}}"
+
       - name: Print Changelog
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ## Changelog will be...
           ${{ steps.github-release.outputs.changelog }}
           EOF
   release-latest:
