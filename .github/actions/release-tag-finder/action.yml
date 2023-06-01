@@ -1,16 +1,14 @@
 name: "Release Tag Finder"
 description: "finds release tags and generate next tag with app name"
 inputs:
-  app-name:
-    description: "앱 기준 디렉토리"
-    required: true
+  prefix:
+    description: "사용하고자 하는 Prefix (eg. sample-service-v)"
+    default: ""
+    required: false
   bump:
     description: "next tag에서 SemVer 어떤 부분(major, minor, patch)를 올릴지 결정"
     default: "patch"
     required: false
-  github-token:
-    description: "github token"
-    required: true
 outputs:
   next-tag:
     description: "다음 Tag 명 (eg. sample-service-v1.0.1)"
@@ -24,6 +22,15 @@ outputs:
   current-version:
     description: "현재 Version (eg. 1.0.0)"
     value: ${{ steps.current-tag.outputs.version }}
+  major:
+    description: "다음 Major Version (eg. 1)"
+    value: ${{ steps.next-version.outputs.major }}
+  minor:
+    description: "다음 Minor Version (eg. 0)"
+    value: ${{ steps.next-version.outputs.minor }}
+  patch:
+    description: "다음 Patch Version (eg. 1)"
+    value: ${{ steps.next-version.outputs.patch }}
   
 runs:
   using: composite
@@ -34,31 +41,44 @@ runs:
       with:
         repository: ${{ github.repository }}
         releases-only: true
-        prefix: "${{ inputs.app-name }}-v"
+        prefix: ${{ inputs.prefix }}
     - name: Get Current Tag and Version
       id: current-tag
       run: |
         LATEST_TAG="${{ steps.find-latest-tag.outputs.tag }}"
-        LATEST_VERSION="${LATEST_TAG#${{ inputs.app-name }}-v}"
+        LATEST_VERSION="${LATEST_TAG#${{ inputs.prefix }}}"
         echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
         echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
       shell: bash
-    - name: Get Next SemVer
-      id: next-semver
-      uses: "WyriHaximus/github-action-next-semvers@v1"
+    - name: Parsing SemVer
+      uses: madhead/semver-utils@latest
+      id: version
       with:
         version: ${{ steps.current-tag.outputs.version }}
     - name: Generate Next Tag and Version
       id: generate-next-tag
       run: |
-        GEN_VERSION="${{ steps.next-semver.outputs.patch }}"
+        GEN_VERSION="${{ steps.version.outputs.inc-patch }}"
         if [[ "${{ inputs.bump }}" == "minor" ]]; then
-          GEN_VERSION="${{ steps.next-semver.outputs.minor }}"
+          GEN_VERSION="${{ steps.version.outputs.inc-minor }}"
         fi
         if [[ "${{ inputs.bump }}" == "major" ]]; then
-          GEN_VERSION="${{ steps.next-semver.outputs.major }}"
+          GEN_VERSION="${{ steps.version.outputs.inc-major }}"
         fi
-        GEN_TAG="${{ inputs.app-name }}-v${GEN_VERSION}"
+        GEN_TAG="${{ inputs.prefix }}${GEN_VERSION}"
         echo "tag=${GEN_TAG}" >> $GITHUB_OUTPUT
         echo "version=${GEN_VERSION}" >> $GITHUB_OUTPUT
       shell: bash
+    - name: Parsing Next SemVer
+      uses: madhead/semver-utils@latest
+      id: next-version
+      with:
+        version: ${{ steps.generate-next-tag.outputs.version }}
+    - name: Generate SemVer Details
+      id: semver-details
+      run: |
+        echo "major=${{ steps.next-version.outputs.major }}" >> $GITHUB_OUTPUT
+        echo "minor=${{ steps.next-version.outputs.minor }}" >> $GITHUB_OUTPUT
+        echo "patch=${{ steps.next-version.outputs.patch }}" >> $GITHUB_OUTPUT
+      shell: bash
+      

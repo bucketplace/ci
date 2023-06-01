@@ -94,8 +94,7 @@ jobs:
         id: get-tag
         uses: bucketplace/ci/.github/actions/release-tag-finder@latest
         with:
-          app-name: ${{ inputs.app-name }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          prefix: "${{ inputs.app-name }}-v"
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1
@@ -190,8 +189,7 @@ jobs:
         id: get-tag
         uses: bucketplace/ci/.github/actions/release-tag-finder@latest
         with:
-          app-name: ${{ inputs.app-name }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          prefix: "${{ inputs.app-name }}-v"
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1

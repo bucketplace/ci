@@ -14,37 +14,56 @@ on:
           - 'patch'
 
 jobs:
-  release-self:
-    name: Run release on self
+  prepare-releases:
+    name: Prepare release
     runs-on: ubuntu-latest
+    outputs:
+      current-tag: ${{ steps.get-tag.outputs.current-tag }}
+      next-tag: ${{ steps.get-tag.outputs.next-tag }}
+      changelog: ${{ steps.github-release.outputs.changelog }}
+      next-major: ${{ steps.get-tag.outputs.major }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Get next version
-        uses: reecetech/version-increment@2023.3.1
-        id: version
+      - name: Get Tag
+        id: get-tag
+        uses: bucketplace/ci/.github/actions/release-tag-finder@latest
         with:
-          scheme: semver
-          increment: ${{ github.event.inputs.increment }}
-      - name: Create release
-        uses: ncipollo/release-action@v1.12.0
+          prefix: "v"
+          bump: ${{ github.event.inputs.increment }}
+      - name: Build Changelog
+        id: github-release
+        uses: mikepenz/release-changelog-builder-action@v3
         with:
-          allowUpdates: true
-          makeLatest: true
-          generateReleaseNotes: true
-          name: ${{ steps.version.outputs.v-version }}
-          tag: ${{ steps.version.outputs.v-version }}
+          fromTag: ${{ steps.get-tag.outputs.current-tag }}
+      - name: Print Changelog
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" << EOF
+          ${{ steps.github-release.outputs.changelog }}
+          EOF
+  release-latest:
+    environment: production
+    name: Release latest
+    runs-on: ubuntu-latest
+    needs: prepare-releases
+    steps:
+      - name: Create Release
+        uses: softprops/action-gh-release@v1 
+        with:
+          body: ${{ needs.prepare-releases.outputs.changelog}}
+          tag_name: ${{ needs.prepare-releases.outputs.next-tag }}
+          name: ${{ needs.prepare-releases.outputs.next-tag }}
       - name: Update major git tag to HEAD
         uses: rickstaa/action-create-tag@v1
         with:
-          tag: "${{ steps.version.outputs.major-v-version }}"
+          tag: "v${{ needs.prepare-releases.outputs.next-major }}"
           force_push_tag: true
           tag_exists_error: false
-          message: "${{ steps.version.outputs.major-v-version }} release: ${{ steps.version.outputs.v-version }}"
+          message: "v${{ needs.prepare-releases.outputs.next-major }} release: ${{ needs.prepare-releases.outputs.next-tag }}"
       - name: Update Git tag 'latest' to HEAD
         uses: rickstaa/action-create-tag@v1
         with:
           tag: "latest"
           force_push_tag: true
           tag_exists_error: false
-          message: "Latest release: ${{ steps.version.outputs.v-version }}"
+          message: "Latest release: ${{ needs.prepare-releases.outputs.next-tag }}"
