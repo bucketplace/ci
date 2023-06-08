@@ -41,10 +41,12 @@ on:
         required: false
         default: "70 70"
       use-ginkgo:
+        type: boolean
         description: "테스트를 위해 Ginkgo CLI를 사용할 것인지 여부"
         required: false
         default: true
       use-sonar-report:
+        type: boolean
         description: "sonarqube 리포트를 사용할 것인지 여부"
         required: false
         default: true
