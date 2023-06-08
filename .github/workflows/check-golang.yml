@@ -40,9 +40,17 @@ on:
         description: "unit test coverage threshold"
         required: false
         default: "70 70"
+      use-ginkgo:
+        description: "테스트를 위해 Ginkgo CLI를 사용할 것인지 여부"
+        required: false
+        default: true
+      use-sonar-report:
+        description: "sonarqube 리포트를 사용할 것인지 여부"
+        required: false
+        default: true
     secrets:
       SONAR_TOKEN:
-        required: true
+        required: false
       BP_DEPLOYER_GITHUB_TOKEN: # if you need private github module access
         required: false
 jobs:
@@ -112,14 +120,21 @@ jobs:
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
           go env -w GONOSUMDB=go.dailyhou.se && \
           go install github.com/axw/gocov/gocov@latest && \
-          go install github.com/AlekSi/gocov-xml@latest && \
-          cd ${{ inputs.app-path }} && go install github.com/onsi/ginkgo/v2/ginkgo
-
-      - name: Test
+          go install github.com/AlekSi/gocov-xml@latest
+      - name: Test with Ginkgo
+        if: inputs.use-ginkgo
         run: |
-          export PATH=$(go env GOPATH)/bin:$PATH && \
-          cd ${{ inputs.app-path }} && \
+          export PATH=$(go env GOPATH)/bin:$PATH && cd ${{ inputs.app-path }} && \
+          && go install github.com/onsi/ginkgo/v2/ginkgo && \
           ginkgo -p --race --trace --cover --coverprofile=coverage.txt ./...
+      - name: Test with Go Test
+        if: !inputs.use-ginkgo
+        run: |
+          export PATH=$(go env GOPATH)/bin:$PATH && cd ${{ inputs.app-path }} && \
+          go test -v -cover -coverprofile=coverage.txt ./...
+      - name: Convert Coverage Format
+        run: |
+          export PATH=$(go env GOPATH)/bin:$PATH && cd ${{ inputs.app-path }} && \
           gocov convert coverage.txt | gocov-xml > coverage.xml
       - name: Create Coverage Information
         if: always() && github.event_name == 'pull_request'
@@ -135,7 +150,7 @@ jobs:
           output: file
           thresholds: ${{ inputs.coverage-threshold }}
       - name: SonarQube Scanner Parameters Config
-        if: always()
+        if: always() && inputs.use-sonar-report
         id: sonarqube-params
         uses: philips-software/sonar-scanner-action@v1.5.1
         with:
@@ -148,6 +163,7 @@ jobs:
           organization: bucketplace
           onlyConfig: true
       - name: SonarQube Scan
+        if: inputs.use-sonar-report
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
