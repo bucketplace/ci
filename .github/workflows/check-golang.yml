@@ -130,7 +130,7 @@ jobs:
           && go install github.com/onsi/ginkgo/v2/ginkgo && \
           ginkgo -p --race --trace --cover --coverprofile=coverage.txt ./...
       - name: Test with Go Test
-        if: !inputs.use-ginkgo
+        if: ${{ !inputs.use-ginkgo }}
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH && cd ${{ inputs.app-path }} && \
           go test -v -cover -coverprofile=coverage.txt ./...
