@@ -156,12 +156,13 @@ jobs:
         id: sonarqube-validation
         shell: bash
         run: |
-          if [ ${{ secrets.SONAR_TOKEN == null }}
+          if [ ${{ secrets.SONAR_TOKEN == null }} == "true" ]
           then
             echo "SONAR_TOKEN secret is required. SonarQube steps will be skipped." 
             echo "sonarqube-available=false" >> $GITHUB_OUTPUT
           else
             echo "sonarqube-available=true" >> $GITHUB_OUTPUT
+          fi
       - name: SonarQube Scanner Parameters Config
         if: always() && ${{ steps.sonarqube-validation.outputs.sonarqube-available == "true" }}
         id: sonarqube-params
@@ -176,7 +177,7 @@ jobs:
           organization: bucketplace
           onlyConfig: true
       - name: SonarQube Scan
-        if: inputs.use-sonar-report && ${{ steps.sonarqube-validation.outputs.sonarqube-available == "true" }}
+        if: ${{ steps.sonarqube-validation.outputs.sonarqube-available == "true" }}
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
