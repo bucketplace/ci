@@ -78,7 +78,7 @@ jobs:
           workdir: ${{ inputs.app-path }}
           go_version: ${{ inputs.go-version }}
           go_version_file: ${{ inputs.app-path}}/go.mod
-          reporter: ${{ inputs.reporter }}
+          reporter: github-pr-check
           filter_mode: ${{ inputs.filter-mode }}
           fail_on_error: true
           golangci_lint_version: v1.52.2 # last update: 2023.03.29
@@ -156,7 +156,7 @@ jobs:
         id: sonarqube-validation
         shell: bash
         run: |
-          if [ ${{ secrets.SONAR_TOKEN == null }} == "true" ]
+          if [ ${{ secrets.SONAR_TOKEN == null }} ]
           then
             echo "SONAR_TOKEN secret is required. SonarQube steps will be skipped." 
             echo "sonarqube-available=false" >> $GITHUB_OUTPUT
