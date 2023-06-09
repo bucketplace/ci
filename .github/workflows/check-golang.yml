@@ -70,7 +70,7 @@ jobs:
           git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
       - name: Lint
         uses: reviewdog/action-golangci-lint@v2
-        env:                                                                    
+        env:
           GOPROXY: "https://go.co-workerhou.se,https://proxy.golang.org,direct"
           GONOSUMDB: "go.dailyhou.se"
         with:
@@ -164,7 +164,7 @@ jobs:
             echo "sonarqube-available=true" >> $GITHUB_OUTPUT
           fi
       - name: SonarQube Scanner Parameters Config
-        if: always() && ${{ steps.sonarqube-validation.outputs.sonarqube-available == "true" }}
+        if: ${{ always() && steps.sonarqube-validation.outputs.sonarqube-available == true }}
         id: sonarqube-params
         uses: philips-software/sonar-scanner-action@v1.5.1
         with:
@@ -177,7 +177,7 @@ jobs:
           organization: bucketplace
           onlyConfig: true
       - name: SonarQube Scan
-        if: ${{ steps.sonarqube-validation.outputs.sonarqube-available == "true" }}
+        if: steps.sonarqube-validation.outputs.sonarqube-available == true
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
