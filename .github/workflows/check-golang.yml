@@ -163,7 +163,7 @@ jobs:
           else
             echo "sonarqube-available=true" >> $GITHUB_OUTPUT
       - name: SonarQube Scanner Parameters Config
-        if: always() && steps.sonarqube-validation.outputs.sonarqube-available == "true"
+        if: always() && ${{ steps.sonarqube-validation.outputs.sonarqube-available == "true" }}
         id: sonarqube-params
         uses: philips-software/sonar-scanner-action@v1.5.1
         with:
@@ -176,7 +176,7 @@ jobs:
           organization: bucketplace
           onlyConfig: true
       - name: SonarQube Scan
-        if: inputs.use-sonar-report && steps.sonarqube-validation.outputs.sonarqube-available == "true"
+        if: inputs.use-sonar-report && ${{ steps.sonarqube-validation.outputs.sonarqube-available == "true" }}
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
