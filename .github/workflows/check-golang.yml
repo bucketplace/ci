@@ -151,8 +151,19 @@ jobs:
           indicators: true
           output: file
           thresholds: ${{ inputs.coverage-threshold }}
-      - name: SonarQube Scanner Parameters Config
+      - name: SonarQube Config Validation
         if: always() && inputs.use-sonar-report
+        id: sonarqube-validation
+        shell: bash
+        run: |
+          if [ ${{ secrets.SONAR_TOKEN == null }}
+          then
+            echo "SONAR_TOKEN secret is required. SonarQube steps will be skipped." 
+            echo "sonarqube-available=false" >> $GITHUB_OUTPUT
+          else
+            echo "sonarqube-available=true" >> $GITHUB_OUTPUT
+      - name: SonarQube Scanner Parameters Config
+        if: always() && steps.sonarqube-validation.outputs.sonarqube-available == "true"
         id: sonarqube-params
         uses: philips-software/sonar-scanner-action@v1.5.1
         with:
@@ -165,7 +176,7 @@ jobs:
           organization: bucketplace
           onlyConfig: true
       - name: SonarQube Scan
-        if: inputs.use-sonar-report
+        if: inputs.use-sonar-report && steps.sonarqube-validation.outputs.sonarqube-available == "true"
         uses: sonarsource/sonarqube-scan-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
