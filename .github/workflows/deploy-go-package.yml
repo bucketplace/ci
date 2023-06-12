@@ -45,6 +45,8 @@ jobs:
   lint:
     name: Deploy
     runs-on: [self-hosted, Linux, X64, cache]
+    outputs:
+      module-version: ${{ steps.deploy-go-package.outputs.module-version }}
     steps:        
       - name: Checkout code
         uses: actions/checkout@v3
