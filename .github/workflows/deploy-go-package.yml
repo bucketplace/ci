@@ -45,6 +45,8 @@ jobs:
   lint:
     name: Deploy
     runs-on: [self-hosted, Linux, X64, cache]
+    outputs:
+      module-version: ${{ steps.deploy-go-package.outputs.module-version }}
     steps:        
       - name: Checkout code
         uses: actions/checkout@v3
@@ -58,8 +60,9 @@ jobs:
         run: |
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
           go env -w GONOSUMDB=go.co-workerhou.se && \
-          go install go.co-workerhou.se/gohouse/pack/cmd/pack@v0.4.0
+          go install go.co-workerhou.se/gohouse/pack/cmd/pack@v0.4.1
       - name: Deploy Package
+        id: deploy-go-package
         run: |
           export PATH=$(go env GOPATH)/bin:$PATH && \
           pack --module-name="${{ inputs.package-name }}" \
@@ -69,8 +72,8 @@ jobs:
             --pre-release-version="${{ inputs.pre-release-version }}" \
             --increment-version-segment="${{ inputs.increment-version-segment }}" \
             --aws-access-key-id="${{ secrets.AWS_ACCESS_KEY_ID }}" \
-            --aws-secret-access-key="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-
+            --aws-secret-access-key="${{ secrets.AWS_SECRET_ACCESS_KEY }}" \
+            --github
       - name: Add Summary
         run: |
           cat >> "$GITHUB_STEP_SUMMARY" << EOF
@@ -78,11 +81,11 @@ jobs:
           | Name | Details |
           | --- | --- |
           | Package Name | ${{ inputs.package-name }} |
-          | Package Version | ${{ inputs.package-version }} |
+          | Package Version | ${{ steps.deploy-go-package.outputs.module-version }} |
           | Package Version Prefix | ${{ inputs.version-prefix }} |
           | Package Pre Release Version | ${{ inputs.pre-release-version }} |
           | Increment Version Segment | ${{ inputs.increment-version-segment }} |
           | App Path | ${{ inputs.package-path }} |
-          | Go Version | ${{ inputs.go-version}} |
+          | Go Version | ${{ inputs.go-version }} |
           | Deployed By | @${{ github.actor }} |
           EOF
