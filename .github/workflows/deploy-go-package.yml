@@ -18,17 +18,17 @@ on:
         default: "."
       increment-version-segment:
         type: string
-        description: 'Increment version of release (major, minor, patch)'
+        description: "Increment version of release (major, minor, patch)"
         required: false
-        default: 'patch'
+        default: "patch"
       version-prefix:
         type: string
-        default: ''
+        default: ""
         description: 업데이트를 진행할 버전 e.g) N.N.N, N.N, N, ''
         required: false
       pre-release-version:
         type: string
-        default: ''
+        default: ""
         description: Pre-Release 버전
         required: false
       go-version:
@@ -41,13 +41,17 @@ on:
         required: true
       AWS_ACCESS_KEY_ID:
         required: true
+    outputs:
+      module-version:
+        description: 최종적으로 결정된 버전
+        value: ${{ jobs.deploy.outputs.module-version }}
 jobs:
-  lint:
+  deploy:
     name: Deploy
     runs-on: [self-hosted, Linux, X64, cache]
     outputs:
       module-version: ${{ steps.deploy-go-package.outputs.module-version }}
-    steps:        
+    steps:
       - name: Checkout code
         uses: actions/checkout@v3
       - name: Setup Go
