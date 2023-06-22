@@ -77,7 +77,6 @@ runs:
             "empty_template": "- no changes"
           }
         fromTag: ${{ steps.get-tag.outputs.current-tag }}
-        toTag: ${{ steps.get-tag.outputs.next-tag }}
     - name: print changelog 
       run: |
         echo ${{ steps.changelog.outputs.changelog }} >> $GITHUB_STEP_SUMMARY
