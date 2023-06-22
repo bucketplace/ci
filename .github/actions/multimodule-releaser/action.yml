@@ -100,5 +100,5 @@ runs:
       uses: benc-uk/workflow-dispatch@v1
       with:
         workflow: ${{ inputs.workflow-file }}
-        ref: "refs/tags/${{ inputs.version }}"
+        ref: "refs/tags/${{ steps.get-tag.outputs.next-tag }}"
         inputs: ${{ inputs.workflow-inputs }}
