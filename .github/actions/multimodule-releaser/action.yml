@@ -91,6 +91,8 @@ runs:
         tag: ${{ steps.get-tag.outputs.next-tag }}
         name: ${{ steps.get-tag.outputs.next-tag }}
         makeLatest: ${{ inputs.latest }}
+        body: ${{ steps.changelog.outputs.changelog }}
+        allowUpdates: true
     - name: trigger workflow with versions
       if: ${{ inputs.worflow-file != '' }}
       uses: benc-uk/workflow-dispatch@v1
