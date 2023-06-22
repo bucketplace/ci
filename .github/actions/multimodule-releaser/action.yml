@@ -72,8 +72,8 @@ runs:
                 "exclude_labels": ["feature", "bugfix", "test", "dependencies"]
               }
             ],
-            "template": "${{CHANGELOG}}",
-            "pr_template": "- ${{TITLE}}\n   - PR: #${{NUMBER}}",
+            "template": "#{{CHANGELOG}}",
+            "pr_template": "- #{{TITLE}}\n   - PR: ##{{NUMBER}}",
             "empty_template": "- no changes"
           }
         fromTag: ${{ steps.get-tag.outputs.current-tag }}
