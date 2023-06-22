@@ -1,0 +1,92 @@
+name: "Multimodule Releaser"
+description: "Releases packages in a multimodule repository"
+inputs:
+  module:
+    description: "배포하고자 하는 모듈 명"
+    required: true
+  worflow-file:
+    description: "실제 배포가 진행되는 workflow 파일 경로"
+    default: ""
+    required: false
+  bump:
+    description: "next tag에서 SemVer 어떤 부분(major, minor, patch)를 올릴지 결정"
+    default: "patch"
+    required: false
+  version-prefix:
+    description: "version with prefix (ex. v for module-v1.2.0)"
+    default: ""
+    required: false
+  latest:
+    description: "make the release latest"
+    default: "false"
+    required: false
+
+outputs:
+  released:
+    description: "배포된 태그 명"
+    value: ${{ steps.generate-next-tag.outputs.tag }}
+  
+runs:
+  using: composite
+  steps:
+    - name: Generate Next Tag
+      id: get-tag
+      uses: bucketplace/ci/.github/actions/release-tag-finder@latest
+      with:
+        prefix: '${{ inputs.module }}-${{ inputs.version-prefix }}'
+        bump: '${{ github.event.inputs.bump }}'
+    - name: Build Changelog
+      id: changelog
+      uses: mikepenz/release-changelog-builder-action@v3
+      with:
+        configurationJson: |
+          {
+            "categories": [
+              {
+                "title": "## 🚀 Features",
+                "labels": ["feature", "module/${{ inputs.module }}"],
+                "exhaustive": true
+              },
+              {
+                "title": "## 🐛 Bug Fixes",
+                "labels": ["bugfix", "module/${{ inputs.module }}"],
+                "exhaustive": true
+              },
+              {
+                "title": "## 🧪 Tests",
+                "labels": ["test", "module/${{ inputs.module }}"],
+                "exhaustive": true
+              },
+              {
+                "title": "## 📦 Dependencies",
+                "labels": ["dependencies", "module/${{ inputs.module }}"],
+                "exhaustive": true
+              },
+              {
+                "title": "## 💬 Others",
+                "labels": ["module/${{ inputs.module }}"],
+                "exclude_labels": ["feature", "bugfix", "test", "dependencies"]
+              }
+            ],
+            "template": "${{CHANGELOG}}",
+            "pr_template": "- ${{TITLE}}\n   - PR: #${{NUMBER}}",
+            "empty_template": "- no changes"
+          }
+        fromTag: ${{ steps.get-tag.outputs.current-tag }}
+        toTag: ${{ steps.get-tag.outputs.next-tag }}
+    - name: print changelog 
+      run: |
+        echo ${{ steps.changelog.outputs.changelog }} >> $GITHUB_STEP_SUMMARY
+      shell: bash
+    - name: "Create Release for Version (${{ steps.get-tag.outputs.next-version }})"
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ steps.get-tag.outputs.next-tag }}
+        name: ${{ steps.get-tag.outputs.next-tag }}
+        makeLatest: ${{ inputs.latest }}
+    - name: trigger workflow with versions
+      if: ${{ inputs.worflow-file != '' }}
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        workflow: ${{ inputs.worflow-file }}
+        ref: "refs/tags/${{ inputs.version }}"
