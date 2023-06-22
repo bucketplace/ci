@@ -52,7 +52,7 @@ jobs:
       with:
         module: ${{ inputs.module }}
         workflow-file: '${{ inputs.module }}-deploy.yml'
-        workflow-inputs: '{"name": "world"}'
+        workflow-inputs: '{"name": "james"}'
         bump: ${{ inputs.bump }}
         latest: true
 ```
@@ -78,6 +78,8 @@ on:
     inputs:
       name:
         type: string
+        required: false
+        default: ""
 
 jobs:
   hello-world:
