@@ -96,9 +96,9 @@ runs:
         body: ${{ steps.changelog.outputs.changelog }}
         allowUpdates: true
     - name: trigger workflow with versions
-      if: ${{ inputs.worflow-file != '' }}
+      if: ${{ inputs.workflow-file != '' }}
       uses: benc-uk/workflow-dispatch@v1
       with:
-        workflow: ${{ inputs.worflow-file }}
+        workflow: ${{ inputs.workflow-file }}
         ref: "refs/tags/${{ inputs.version }}"
         inputs: ${{ inputs.workflow-inputs }}
