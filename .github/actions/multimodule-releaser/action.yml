@@ -8,6 +8,10 @@ inputs:
     description: "실제 배포가 진행되는 workflow 파일 경로"
     default: ""
     required: false
+  workflow-inputs:
+    description: "실제 배포가 진행되는 workflow 파일에 전달할 값 (json 형태)"
+    default: ""
+    required: false
   bump:
     description: "next tag에서 SemVer 어떤 부분(major, minor, patch)를 올릴지 결정"
     default: "patch"
@@ -90,3 +94,4 @@ runs:
       with:
         workflow: ${{ inputs.worflow-file }}
         ref: "refs/tags/${{ inputs.version }}"
+        inputs: ${{ inputs.workflow-inputs }}

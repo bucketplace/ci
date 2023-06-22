@@ -50,8 +50,9 @@ jobs:
       id: release_module
       uses: bucketplace/ci/.github/actions/multimodule-releaser@latest
       with:
-        module: 'some-module'
-        workflow-file: 'some-module-deploy.yml'
+        module: ${{ inputs.module }}
+        workflow-file: '${{ inputs.module }}-deploy.yml'
+        workflow-inputs: '{"name": "world"}'
         bump: ${{ inputs.bump }}
         latest: true
 ```
@@ -69,11 +70,14 @@ jobs:
 ```yml
 # .github/workflows/some-module-deploy.yml
 
-run: Deploy some-module
+name: Deploy some-module
 run-name: ${{ github.ref_name }}
 
 on:
   workflow_dispatch:
+    inputs:
+      name:
+        type: string
 
 jobs:
   hello-world:
@@ -81,9 +85,8 @@ jobs:
     steps:
     - id: hello
       run: |
-        echo "hello world!!"
+        echo "hello ${{ inputs.name }}!!"
 ```
 
 아래와 같이 버전명으로 workflow run History가 생성된다.
 ![run history](images/workflow_run_history.png)
-
