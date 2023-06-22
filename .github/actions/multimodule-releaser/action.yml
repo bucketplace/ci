@@ -39,6 +39,9 @@ runs:
       with:
         prefix: '${{ inputs.module }}-${{ inputs.version-prefix }}'
         bump: '${{ github.event.inputs.bump }}'
+    - uses: rickstaa/action-create-tag@v1
+      with:
+        tag: "${{ steps.get-tag.outputs.next-tag }}"
     - name: Build Changelog
       id: changelog
       uses: mikepenz/release-changelog-builder-action@v3
@@ -77,6 +80,7 @@ runs:
             "empty_template": "- no changes"
           }
         fromTag: ${{ steps.get-tag.outputs.current-tag }}
+        toTag: ${{ steps.get-tag.outputs.next-tag }}
     - name: print changelog 
       run: |
         echo ${{ steps.changelog.outputs.changelog }} >> $GITHUB_STEP_SUMMARY
