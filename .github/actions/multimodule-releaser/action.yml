@@ -83,7 +83,9 @@ runs:
         toTag: ${{ steps.get-tag.outputs.next-tag }}
     - name: print changelog 
       run: |
-        echo ${{ steps.changelog.outputs.changelog }} >> $GITHUB_STEP_SUMMARY
+        cat  <<EOF >> $GITHUB_STEP_SUMMARY
+        ${{ steps.changelog.outputs.changelog }}
+        EOF
       shell: bash
     - name: "Create Release for Version (${{ steps.get-tag.outputs.next-version }})"
       uses: ncipollo/release-action@v1
