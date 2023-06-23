@@ -44,6 +44,7 @@ jobs:
     permissions:
       contents: write
       actions: write
+      pull-requests: read
     steps:
     - uses: actions/checkout@v3
     - name: 'Release Module'
@@ -92,3 +93,8 @@ jobs:
 
 아래와 같이 버전명으로 workflow run History가 생성된다.
 ![run history](images/workflow_run_history.png)
+
+## **🚨 주의점 **
+### 최초 버전
+본 액션은 항상 기존에 Release 된 버전을 기준으로 하나 증가하여 배포합니다. 따라서 반드시 같은 형식의 버전 Release가 이미 최소 하나는 있어야 합니다. 예를 들어 Module 명이 `some-module`이고 version 이 `1.0.0` 부터 시작이라면 본 Action을 사용하기 전 반드시 `some-version-1.0.0` 태그 및 릴리즈가 이미 배포되어 있어야 오류가 나지 않습니다. 최초 버전은 수동으로 릴리즈 해주시길 부탁드립니다.
+
