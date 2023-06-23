@@ -85,12 +85,6 @@ runs:
           }
         fromTag: ${{ steps.get-tag.outputs.current-tag }}
         toTag: ${{ steps.get-tag.outputs.next-tag }}
-    - name: print changelog 
-      run: |
-        cat  <<EOF >> $GITHUB_STEP_SUMMARY
-        ${{ steps.changelog.outputs.changelog }}
-        EOF
-      shell: bash
     - name: Get Date Suffix
       id: get-date-suffix
       run: |
@@ -111,7 +105,17 @@ runs:
     - name: trigger workflow with versions
       if: ${{ inputs.workflow-file != '' }}
       uses: benc-uk/workflow-dispatch@v1
+      id: trigger-workflow
       with:
         workflow: ${{ inputs.workflow-file }}
         ref: "refs/tags/${{ steps.get-tag.outputs.next-tag }}"
         inputs: ${{ inputs.workflow-inputs }}
+    - name: print changelog 
+      run: |
+        cat  <<EOF >> $GITHUB_STEP_SUMMARY
+        # Process
+          release if triggered: [${{ steps.get-tag.outputs.next-tag }}](https://github.com/${{ github.repository }}/actions/workflows/${{ inputs.workflow-file }})
+        # Changelog
+        ${{ steps.changelog.outputs.changelog }}
+        EOF
+      shell: bash
