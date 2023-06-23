@@ -94,7 +94,17 @@ jobs:
 아래와 같이 버전명으로 workflow run History가 생성된다.
 ![run history](images/workflow_run_history.png)
 
-## **🚨 주의점 **
+## **🚨 주의점**
 ### 최초 버전
 본 액션은 항상 기존에 Release 된 버전을 기준으로 하나 증가하여 배포합니다. 따라서 반드시 같은 형식의 버전 Release가 이미 최소 하나는 있어야 합니다. 예를 들어 Module 명이 `some-module`이고 version 이 `1.0.0` 부터 시작이라면 본 Action을 사용하기 전 반드시 `some-version-1.0.0` 태그 및 릴리즈가 이미 배포되어 있어야 오류가 나지 않습니다. 최초 버전은 수동으로 릴리즈 해주시길 부탁드립니다.
 
+## Inputs
+| **Input**         | **Description**                                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `module`          | 빌드하고자 하는 모듈 명, 버전의 Prefix로도 사용된다. 필수 옵션이다.                                                                                 |
+| `workflow-file`   | 실제 배포가 진행되는 workflow 파일 경로, 없을 경우 추가 workflow 를 실행하지 않는다                                                                 |
+| `workflow-inputs` | 실제 배포가 진행되는 workflow에 전달할 Input, Json string 형태이며, 없을 경우 input을 전달하지 않는다.                                              |
+| `bump`            | SemVer 버전의 어떤 파트를 올릴지 선택하는 옵션. 필수이며 기본값은 `patch` 이다. (`major`, `minor`, `patch` 중 택 1)                                 |
+| `latest`          | 릴리즈 시에 해당 릴리즈를 latest로 만들 것인지에 대한 선택. 기본값은 false 이다.                                                                    |
+| `divider`         | Tag명을 결정할때 Prefix 와 Version 사이에 구분자. 기본값은 `-` 이며, 경우에 따라 변경 가능하다 (`/v` 일 경우 some-module/v1.0.0 형태로 버전이 생성) |
+| `date-suffix`     | Release 를 등록할때 이 값이 있으면 `@YYMMDD` 형태의 날짜 정보를 suffix로 추가해준다.                                                                |
