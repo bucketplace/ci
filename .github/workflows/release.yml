@@ -3,7 +3,7 @@ name: "Release CI Workflows and Actions"
 on:
   workflow_dispatch:
     inputs:
-      increment:
+      bump:
         type: choice
         description: 'Increment version of release (major, minor, patch)'
         required: true
@@ -14,61 +14,54 @@ on:
           - 'patch'
 
 jobs:
-  prepare-releases:
-    name: Prepare release
+  changelog:
     runs-on: ubuntu-latest
-    outputs:
-      current-tag: ${{ steps.get-tag.outputs.current-tag }}
-      next-tag: ${{ steps.get-tag.outputs.next-tag }}
-      changelog: ${{ steps.github-release.outputs.changelog }}
-      next-major: ${{ steps.get-tag.outputs.major }}
+    outputs: 
+      next-tag: ${{ steps.changelog.outputs.next-tag }}
+      changelog: ${{ steps.changelog.outputs.changelog }}
+    permissions:
+      contents: write
+      pull-requests: read
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Get Tag
-        id: get-tag
-        uses: bucketplace/ci/.github/actions/release-tag-finder@latest
-        with:
-          prefix: "v"
-          bump: ${{ github.event.inputs.increment }}
-      - name: Build Changelog
-        id: github-release
-        uses: mikepenz/release-changelog-builder-action@v3
-        with:
-          fromTag: ${{ steps.get-tag.outputs.current-tag }}
-          toTag: "refs/heads/${{github.event.repository.default_branch}}"
-
-      - name: Print Changelog
-        run: |
-          cat >> "$GITHUB_STEP_SUMMARY" << EOF
-          ## Changelog will be...
-          ${{ steps.github-release.outputs.changelog }}
-          EOF
-  release-latest:
+    - uses: actions/checkout@v3
+    - id: changelog
+      uses: bucketplace/ci/.github/actions/multimodule-changelog@latest
+      with:
+        module: ''
+        divider: ''
+        bump: ${{ inputs.bump }}
+  release:
+    needs: changelog
+    runs-on: ubuntu-latest
     environment: production
-    name: Release latest
-    runs-on: ubuntu-latest
-    needs: prepare-releases
+    permissions:
+      contents: write
+      actions: write
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Create Release
-        uses: softprops/action-gh-release@v1 
-        with:
-          body: ${{ needs.prepare-releases.outputs.changelog}}
-          tag_name: ${{ needs.prepare-releases.outputs.next-tag }}
-          name: ${{ needs.prepare-releases.outputs.next-tag }}
-      - name: Update major git tag to HEAD
-        uses: rickstaa/action-create-tag@v1
-        with:
-          tag: "v${{ needs.prepare-releases.outputs.next-major }}"
-          force_push_tag: true
-          tag_exists_error: false
-          message: "v${{ needs.prepare-releases.outputs.next-major }} release: ${{ needs.prepare-releases.outputs.next-tag }}"
-      - name: Update Git tag 'latest' to HEAD
-        uses: rickstaa/action-create-tag@v1
-        with:
-          tag: "latest"
-          force_push_tag: true
-          tag_exists_error: false
-          message: "Latest release: ${{ needs.prepare-releases.outputs.next-tag }}"
+    - uses: actions/checkout@v3
+    - id: release
+      uses: bucketplace/ci/.github/actions/release-and-dispatch@latest
+      with:
+        next-tag: '${{ needs.changelog.outputs.next-tag }}'
+        changelog: '${{ needs.changelog.outputs.changelog }}'
+        latest: true
+        date-suffix: true
+    - name: Parsing Next SemVer
+      uses: madhead/semver-utils@latest
+      id: next-version
+      with:
+        version: ${{ needs.changelog.outputs.next-tag }}
+    - name: Update major git tag to HEAD
+      uses: rickstaa/action-create-tag@v1
+      with:
+        tag: "v${{ steps.next-version.outputs.major }}"
+        force_push_tag: true
+        tag_exists_error: false
+        message: "'v${{ steps.next-version.outputs.major }}' release: ${{ needs.changelog.outputs.next-tag }}"
+    - name: Update Git tag 'latest' to HEAD
+      uses: rickstaa/action-create-tag@v1
+      with:
+        tag: "latest"
+        force_push_tag: true
+        tag_exists_error: false
+        message: "'latest' release: ${{ needs.changelog.outputs.next-tag }}"

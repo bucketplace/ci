@@ -39,7 +39,7 @@ jobs:
 
 변경사항이 `main` 브랜치에 병합되면 자동으로 `rc` 태그가 달려 테스트가 가능해집니다.
 
-새로운 버전을 Release 할때는, 저장소 상단의 Actions 탭에서 `Release CI Workflows and Actions` Workflow를 선택합니다.
+새로운 버전을 Release 할때는, 저장소 상단의 Actions 탭에서 [`Release CI Workflows and Actions`](https://github.com/bucketplace/ci/actions/workflows/release.yml) Workflow를 선택합니다.
 
 그러면 우측 상단의 `Run workflow`라는 버튼이 있는데 이 버튼을 눌러 배포할 수 있습니다.
 
