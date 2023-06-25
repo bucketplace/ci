@@ -14,7 +14,7 @@ multi module 설정은 즉시 릴리즈 실행과, Changelog 검토 및 승인 �
 
 Action은 아래와 같이 설정하여 사용 가능합니다.
 
-```yml
+```yaml
 # .github/workflows/module-release.yml
 
 name: Module Release
@@ -62,9 +62,11 @@ jobs:
 ```
 
 위의 액션을 생성, 액션메뉴로 들어가면 Action run history 목록 상단에 `Run workflow` 버튼이 생성됩니다.
+
 ![run workflow 버튼](images/run_workflows.png)
 
 이 버튼을 누르고 모듈과 Bump 옵션을 선택하면 버전이 하나 올라간 새로운 릴리즈가 생성됩니다.
+
 ![bump](images/run_workflow_modal.png)
 
 예를 들면 `some-module` 및 `patch` 선택시, 이전에 `some-module-1.0.0` 버전이 있었다면  `some-module-1.0.1` 버전으로 릴리즈가 생성되고 `module/some-module` 라벨이 붙은 PR들을 모두 수집하여 Changelog를 만들어 줍니다.
@@ -72,7 +74,7 @@ jobs:
 일반적으로 이 액션 이후 step으로 이어서 실제 배포 작업을 진행해도 되지만 이렇게 할 경우 workflow run의 이름이 모두 같은 문제가 발생한다.
 따라서 이후에 아래와 같은 배포용 workflow를 따로 제작하여 실행하면 조금 더 유용하게 활용할 수 있다. (추가로 approve 등의 작업도 가능하다.)
 
-```yml
+```yaml
 # .github/workflows/some-module-deploy.yml
 
 name: Deploy some-module
@@ -96,6 +98,7 @@ jobs:
 ```
 
 아래와 같이 버전명으로 workflow run History가 생성된다.
+
 ![run history](images/workflow_run_history.png)
 
 ## Changelog 검토 및 승인
@@ -104,16 +107,22 @@ jobs:
 먼저 검토 및 승인을 위해서는 environment 설정이 필요합니다. 배포용 environment 와 관련해서 자세한 내용은 [이 문서](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)를 참조하세요.
 여기서는 간단하게 환경 설정과 승인 등록절차를 간단한 스크린 샷과 함께 아래에 제공합니다.
 - 먼저 설정하려는 저장소의 Setting > Environments 메뉴를 선택합니다.
+
 ![environments 설정 메뉴](images/env_menu.png)
+
 - 다음 원하는 배포 환경을 설정합니다. 여기서는 일반적으로 production을 사용합니다.
+
 ![environments 값 등록](images/env_enter.png)
+
 - 다음 Deployment Protection rules에서 적절한 approver(reviewer) 그룹/개인을 설정합니다.
+
 ![approver 설정 등 environment rule](images/env_rule.png)
+
 - save protection rules 버튼을 꼭 누릅니다.
 
 이렇게 설정하고 아래와 같이 action을 설정합니다.
 
-```yml
+```yaml
 # .github/workflows/module-release.yml
 
 name: Module Release
@@ -159,8 +168,11 @@ jobs:
 첫번째 changelog job에서 발행한 버전과 changelog를 Workflow Job Summary에서 볼 수 있고, 두번째 Job(release)에서 배포를 진행합니다. 이때 release job은 `environment: production` 설정이 들어 있으므로, 위에서 설정한 approver의 승인을 기다리게 됩니다.
 
 승인자는 아래와 같은 화면을 볼 수 있고,
+
 ![await approval](images/await_review.png)
+
 `Review deployments` 버튼을 누르면 다음과 같은 창을 통해 승인을 진행할 수 있습니다.
+
 ![approval modal](images/review_modal.png)
 
 ## **🚨 주의점**
