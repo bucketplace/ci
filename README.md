@@ -22,7 +22,7 @@ jobs:
     uses: bucketplace/ci/.github/workflows/check-nodejs.yml@latest # << notice here
 ```
 
-필요에 따라 `latest`(사용 추천), `v1`(필요시), `rc`(야수의 심장 소유자) 등의 버전을 사용할 수 있습니다.
+필요에 따라 `latest`(사용 추천), `v2`(필요시), `v1`(레거시), `rc`(야수의 심장 소유자) 등의 버전을 사용할 수 있습니다.
 
 ## Workflows & Actions
 
