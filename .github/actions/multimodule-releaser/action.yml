@@ -4,6 +4,14 @@ inputs:
   module:
     description: "배포하고자 하는 모듈 명"
     required: true
+  bump:
+    description: "next tag에서 SemVer 어떤 부분(major, minor, patch)를 올릴지 결정"
+    default: "patch"
+    required: false
+  divider:
+    description: "Tag의 Prefix와 Version 사이에 들어갈 구분자"
+    default: "-"
+    required: false
   workflow-file:
     description: "실제 배포가 진행되는 workflow 파일 경로"
     default: ""
@@ -12,109 +20,31 @@ inputs:
     description: "실제 배포가 진행되는 workflow 파일에 전달할 값 (json 형태)"
     default: ""
     required: false
-  bump:
-    description: "next tag에서 SemVer 어떤 부분(major, minor, patch)를 올릴지 결정"
-    default: "patch"
-    required: false
   latest:
     description: "make the release latest"
     default: "false"
-    required: false
-  divider:
-    description: "Tag의 Prefix와 Version 사이에 들어갈 구분자"
-    default: "-"
     required: false
   date-suffix:
     description: "Tag의 Version 뒤에 날짜를 붙일지 여부"
     default: "false"
     required: false
-
-outputs:
-  next-tag:
-    description: "생성될 태그 명"
-    value: ${{ steps.generate-next-tag.outputs.tag }}
-  changelog:
-    description: "생성될 태그에 대한 Changelog"
-    value: ${{ steps.changelog.outputs.changelog }}
   
 runs:
   using: composite
   steps:
-    - name: Generate Next Tag
-      id: get-tag
-      uses: bucketplace/ci/.github/actions/release-tag-finder@latest
-      with:
-        prefix: '${{ inputs.module }}${{ inputs.divider }}'
-        bump: '${{ github.event.inputs.bump }}'
-    - name: Build Changelog
+    - name: Generate Changelog
       id: changelog
-      uses: mikepenz/release-changelog-builder-action@v3
+      uses: bucketplace/ci/.github/actions/multimodule-changelog@feature/multimodule
       with:
-        configurationJson: |
-          {
-            "categories": [
-              {
-                "title": "## 🚀 Features",
-                "labels": ["feature", "module/${{ inputs.module }}"],
-                "exhaustive": true
-              },
-              {
-                "title": "## 🐛 Bug Fixes",
-                "labels": ["bugfix", "module/${{ inputs.module }}"],
-                "exhaustive": true
-              },
-              {
-                "title": "## 🧪 Tests",
-                "labels": ["test", "module/${{ inputs.module }}"],
-                "exhaustive": true
-              },
-              {
-                "title": "## 📦 Dependencies",
-                "labels": ["dependencies", "module/${{ inputs.module }}"],
-                "exhaustive": true
-              },
-              {
-                "title": "## 💬 Others",
-                "labels": ["module/${{ inputs.module }}"],
-                "exclude_labels": ["feature", "bugfix", "test", "dependencies"]
-              }
-            ],
-            "template": "#{{CHANGELOG}}",
-            "pr_template": "- #{{TITLE}} @#{{AUTHOR}}\n   - PR: ##{{NUMBER}}",
-            "empty_template": "- no changes"
-          }
-        fromTag: ${{ steps.get-tag.outputs.current-tag }}
-        toTag: ${{ github.ref }}
-    - name: Get Date Suffix
-      id: get-date-suffix
-      run: |
-        if [[ "${{ inputs.date-suffix }}" == "true" ]]; then
-          echo "suffix=@$(date +'%y%m%d')" >> "$GITHUB_OUTPUT"
-        else 
-          echo "suffix=" >> "$GITHUB_OUTPUT"
-        fi
-      shell: bash
-    - name: "Create Release for Version (${{ steps.get-tag.outputs.next-version }})"
-      uses: ncipollo/release-action@v1
+        module: '${{ inputs.module }}'
+        bump: '${{ inputs.bump }}'
+        divider: '${{ inputs.divider }}'
+    - name: Release And Dispatch
+      uses: bucketplace/ci/.github/actions/release-and-dispatch@feature/multimodule
       with:
-        tag: ${{ steps.get-tag.outputs.next-tag }}
-        name: ${{ steps.get-tag.outputs.next-tag }}${{ steps.get-date-suffix.outputs.suffix }}
-        makeLatest: ${{ inputs.latest }}
-        body: ${{ steps.changelog.outputs.changelog }}
-    - name: trigger workflow with versions
-      if: ${{ inputs.workflow-file != '' }}
-      uses: benc-uk/workflow-dispatch@v1
-      id: trigger-workflow
-      with:
-        workflow: ${{ inputs.workflow-file }}
-        ref: "refs/tags/${{ steps.get-tag.outputs.next-tag }}"
-        inputs: ${{ inputs.workflow-inputs }}
-    - name: print changelog 
-      run: |
-        cat  <<EOF >> $GITHUB_STEP_SUMMARY
-        # Process
-          release if triggered: [${{ steps.get-tag.outputs.next-tag }}](https://github.com/${{ github.repository }}/actions/workflows/${{ inputs.workflow-file }})
-        # Changelog
-        ${{ steps.changelog.outputs.changelog }}
-        EOF
-      shell: bash
+        next-tag: '${{ steps.changelog.outputs.next-tag }}'
+        changelog: '${{ steps.changelog.outputs.changelog }}'
+        workflow-file: '${{ inputs.workflow-file }}'
+        workflow-inputs: '${{ inputs.workflow-inputs }}'
+        latest: '${{ inputs.latest }}'
+        date-suffix: '${{ inputs.date-suffix }}'
