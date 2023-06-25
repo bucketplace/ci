@@ -1,0 +1,53 @@
+name: "Release And Dispatch"
+description: "Releases packages and dispatch workflow"
+inputs:
+  next-tag:
+    description: "다음 버전의 태그 명"
+    required: true
+  changelog:
+    description: "다음 버전의 Changelog"
+    required: true
+  workflow-file:
+    description: "실제 배포가 진행되는 workflow 파일 경로"
+    default: ""
+    required: false
+  workflow-inputs:
+    description: "실제 배포가 진행되는 workflow 파일에 전달할 값 (json 형태)"
+    default: ""
+    required: false
+  latest:
+    description: "make the release latest"
+    default: "false"
+    required: false
+  date-suffix:
+    description: "Tag의 Version 뒤에 날짜를 붙일지 여부"
+    default: "false"
+    required: false
+  
+runs:
+  using: composite
+  steps:
+    - name: Get Date Suffix
+      id: get-date-suffix
+      run: |
+        if [[ "${{ inputs.date-suffix }}" == "true" ]]; then
+          echo "suffix=@$(date +'%y%m%d')" >> "$GITHUB_OUTPUT"
+        else 
+          echo "suffix=" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
+    - name: "Create Release for Version (${{ inputs.next-tag }})"
+      uses: ncipollo/release-action@v1
+      with:
+        tag: ${{ inputs.next-tag }}
+        name: ${{ inputs.next-tag }}${{ steps.get-date-suffix.outputs.suffix }}
+        makeLatest: ${{ inputs.latest }}
+        body: ${{ inputs.changelog }}
+    - name: trigger workflow with versions
+      if: ${{ inputs.workflow-file != '' }}
+      uses: benc-uk/workflow-dispatch@v1
+      id: trigger-workflow
+      with:
+        workflow: ${{ inputs.workflow-file }}
+        ref: "refs/tags/${{ inputs.next-tag }}"
+        inputs: ${{ inputs.workflow-inputs }}
