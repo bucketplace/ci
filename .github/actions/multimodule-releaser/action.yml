@@ -34,13 +34,13 @@ runs:
   steps:
     - name: Generate Changelog
       id: changelog
-      uses: bucketplace/ci/.github/actions/multimodule-changelog@feature/multimodule
+      uses: bucketplace/ci/.github/actions/multimodule-changelog@latest
       with:
         module: '${{ inputs.module }}'
         bump: '${{ inputs.bump }}'
         divider: '${{ inputs.divider }}'
     - name: Release And Dispatch
-      uses: bucketplace/ci/.github/actions/release-and-dispatch@feature/multimodule
+      uses: bucketplace/ci/.github/actions/release-and-dispatch@latest
       with:
         next-tag: '${{ steps.changelog.outputs.next-tag }}'
         changelog: '${{ steps.changelog.outputs.changelog }}'
