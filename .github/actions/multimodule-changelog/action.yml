@@ -15,7 +15,7 @@ inputs:
 outputs:
   next-tag:
     description: "생성될 태그 명"
-    value: ${{ steps.generate-next-tag.outputs.tag }}
+    value: ${{ steps.get-tag.outputs.tag }}
   changelog:
     description: "생성될 태그에 대한 Changelog"
     value: ${{ steps.changelog.outputs.changelog }}
