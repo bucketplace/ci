@@ -30,9 +30,12 @@ inputs:
     required: false
 
 outputs:
-  released:
-    description: "배포된 태그 명"
+  next-tag:
+    description: "생성될 태그 명"
     value: ${{ steps.generate-next-tag.outputs.tag }}
+  changelog:
+    description: "생성될 태그에 대한 Changelog"
+    value: ${{ steps.changelog.outputs.changelog }}
   
 runs:
   using: composite
@@ -77,7 +80,7 @@ runs:
               }
             ],
             "template": "#{{CHANGELOG}}",
-            "pr_template": "- #{{TITLE}}\n   - PR: ##{{NUMBER}}",
+            "pr_template": "- #{{TITLE}} @#{{AUTHOR}}\n   - PR: ##{{NUMBER}}",
             "empty_template": "- no changes"
           }
         fromTag: ${{ steps.get-tag.outputs.current-tag }}
