@@ -14,8 +14,17 @@ inputs:
     required: false
 outputs:
   next-tag:
-    description: "생성될 태그 명"
-    value: ${{ steps.get-tag.outputs.tag }}
+    description: "다음 Tag 명 (eg. sample-service-v1.0.1)"
+    value: ${{ steps.get-tag.outputs.next-tag }}
+  current-tag:
+    description: "현재 Tag 명 (eg. sample-service-v1.0.0)"
+    value: ${{ steps.get-tag.outputs.current-tag }}
+  next-version:
+    description: "다음 Version (eg. 1.0.1)"
+    value: ${{ steps.get-tag.outputs.next-version }}
+  current-version:
+    description: "현재 Version (eg. 1.0.0)"
+    value: ${{ steps.get-tag.outputs.current-version }}
   changelog:
     description: "생성될 태그에 대한 Changelog"
     value: ${{ steps.changelog.outputs.changelog }}
