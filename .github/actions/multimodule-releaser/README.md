@@ -123,7 +123,7 @@ on:
 jobs:
   changelog:
     runs-on: ubuntu-latest
-    output: 
+    outputs: 
       next-tag: ${{ steps.changelog.outputs.next-tag }}
       changelog: ${{ steps.changelog.outputs.changelog }}
     permissions:

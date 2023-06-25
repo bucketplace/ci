@@ -23,7 +23,7 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Generate Next Tag
+    - name: Get Tags
       id: get-tag
       uses: bucketplace/ci/.github/actions/release-tag-finder@latest
       with:
