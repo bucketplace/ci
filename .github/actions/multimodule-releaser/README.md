@@ -64,7 +64,8 @@ jobs:
 위의 액션을 생성, 액션메뉴로 들어가면 Action run history 목록 상단에 `Run workflow` 버튼이 생성됩니다.
 ![run workflow 버튼](images/run_workflows.png)
 
-이 버튼을 누르고 Bump 옵션을 선택하면 버전이 하나 올라간 새로운 릴리즈가 생성됩니다.
+이 버튼을 누르고 모듈과 Bump 옵션을 선택하면 버전이 하나 올라간 새로운 릴리즈가 생성됩니다.
+![bump](images/run_workflow_modal.png)
 
 예를 들면 `some-module` 및 `patch` 선택시, 이전에 `some-module-1.0.0` 버전이 있었다면  `some-module-1.0.1` 버전으로 릴리즈가 생성되고 `module/some-module` 라벨이 붙은 PR들을 모두 수집하여 Changelog를 만들어 줍니다.
 
@@ -155,12 +156,12 @@ jobs:
         latest: true
 ```
 
-첫번째 changelog job에서 발행한 버전과 changelog를 Workflow Job Summary에서 볼 수 있고, 두번째 Job(release)에서 배포를 진행합니다. 이때 release job은 아래 설정이 들어 있으므로, 위에서 설정한 approver의 Approval을 기다리게 됩니다.
-```
-environment: production
-```
+첫번째 changelog job에서 발행한 버전과 changelog를 Workflow Job Summary에서 볼 수 있고, 두번째 Job(release)에서 배포를 진행합니다. 이때 release job은 `environment: production` 설정이 들어 있으므로, 위에서 설정한 approver의 승인을 기다리게 됩니다.
 
-이렇게 승인 절차를 이용하여 배포할 수 있습니다.
+승인자는 아래와 같은 화면을 볼 수 있고,
+![await approval](images/await_review.png)
+`Review deployments` 버튼을 누르면 다음과 같은 창을 통해 승인을 진행할 수 있습니다.
+![approval modal](images/review_modal.png)
 
 ## **🚨 주의점**
 ### 최초 버전
