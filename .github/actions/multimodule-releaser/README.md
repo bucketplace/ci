@@ -18,6 +18,7 @@ Action은 아래와 같이 설정하여 사용 가능합니다.
 # .github/workflows/module-release.yml
 
 name: Module Release
+run-name: Release Request ${{ inputs.module }} (${{ inputs.bump }})
 
 on:
   workflow_dispatch:
@@ -126,6 +127,7 @@ jobs:
 # .github/workflows/module-release.yml
 
 name: Module Release
+run-name: Release Request ${{ inputs.module }} (${{ inputs.bump }})
 
 on:
 ... # on 구문은 1번 방식과 동일
