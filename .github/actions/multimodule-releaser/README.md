@@ -102,7 +102,7 @@ jobs:
 
 ![run history](images/workflow_run_history.png)
 
-## Changelog 검토 및 승인
+### Changelog 검토 및 승인
 첫번째 방식처럼 모듈 정보와 version bump만 가지고 릴리즈를 실행하면 어떤 변경사항이 릴리즈에 포함되는지 알기가 어려우므로 배포시점에 조금 불안할 수 있습니다. 특히 배포전 Changelog를 검토하고, 변경사항에 대해서 팀내, 혹은 Stakeholder에게 승인을 받아야 하는 경우라면, environment approval을 활용하는 이번 섹션을 참조하면 좋습니다.
 
 먼저 검토 및 승인을 위해서는 environment 설정이 필요합니다. 배포용 environment 와 관련해서 자세한 내용은 [이 문서](https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment)를 참조하세요.
