@@ -1,4 +1,4 @@
-name: "Release Tag Finder"
+name: "Latest Tag Finder"
 description: "finds release tags and generate next tag with app name"
 inputs:
   prefix:
@@ -8,6 +8,10 @@ inputs:
   bump:
     description: "next tag에서 SemVer 어떤 부분(major, minor, patch)를 올릴지 결정"
     default: "patch"
+    required: false
+  ref:
+    description: "어디서부터 Tag를 찾을지 결정 기본값은 action이 실행된 ref"
+    default: ''
     required: false
 outputs:
   next-tag:
@@ -34,21 +38,23 @@ outputs:
   
 runs:
   using: composite
+  env: 
+    TEMP_DIR: ${{ github.workspace }}/__temp__99
   steps:
-    - name: "Find Latest Tags for new Version"
-      id: find-latest-tag  # The step ID to refer to later.
-      uses: oprypin/find-latest-tag@v1
+    - name: "Checkout all Tags"
+      id: checkout-tags
+      uses: actions/checkout@v3
       with:
-        repository: ${{ github.repository }}
-        releases-only: true
-        prefix: ${{ inputs.prefix }}
-    - name: Get Current Tag and Version
-      id: current-tag
+        fetch-depth: 0
+        ref: ${{ inputs.ref }}
+        path: ${TEMP_DIR}
+    - name: "Find Current Tag"
+      id: current-tag  # The step ID to refer to later.
       run: |
-        LATEST_TAG="${{ steps.find-latest-tag.outputs.tag }}"
-        LATEST_VERSION="${LATEST_TAG#${{ inputs.prefix }}}"
-        echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
-        echo "version=${LATEST_VERSION}" >> $GITHUB_OUTPUT
+        cd ${TEMP_DIR}
+        LATEST_TAG=$(git tag -l "${{ inputs.prefix }}*" --merged | sort --version-sort -r | head -n 1 | tr -d '[:space:]')
+        echo "version=${LATEST_TAG#${{ inputs.prefix }}}" >> $GITHUB_OUTPUT
+        rm -rf ${TEMP_DIR}
       shell: bash
     - name: Parsing SemVer
       uses: madhead/semver-utils@latest

@@ -34,7 +34,7 @@ runs:
   steps:
     - name: Get Tags
       id: get-tag
-      uses: bucketplace/ci/.github/actions/release-tag-finder@latest
+      uses: bucketplace/ci/.github/actions/latest-tag-finder@latest
       with:
         prefix: '${{ inputs.module }}${{ inputs.divider }}'
         bump: '${{ github.event.inputs.bump }}'
