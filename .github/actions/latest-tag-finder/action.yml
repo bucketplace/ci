@@ -38,8 +38,6 @@ outputs:
   
 runs:
   using: composite
-  env: 
-    TEMP_DIR: ${{ github.workspace }}/__temp__99
   steps:
     - name: "Checkout all Tags"
       id: checkout-tags
@@ -47,14 +45,14 @@ runs:
       with:
         fetch-depth: 0
         ref: ${{ inputs.ref }}
-        path: ${TEMP_DIR}
+        path: "__temp__99"
     - name: "Find Current Tag"
       id: current-tag  # The step ID to refer to later.
       run: |
-        cd ${TEMP_DIR}
+        cd __temp__99
         LATEST_TAG=$(git tag -l "${{ inputs.prefix }}*" --merged | sort --version-sort -r | head -n 1 | tr -d '[:space:]')
         echo "version=${LATEST_TAG#${{ inputs.prefix }}}" >> $GITHUB_OUTPUT
-        rm -rf ${TEMP_DIR}
+        rm -rf __temp__99
       shell: bash
     - name: Parsing SemVer
       uses: madhead/semver-utils@latest
