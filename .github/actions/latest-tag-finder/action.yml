@@ -80,4 +80,3 @@ runs:
       id: next-version
       with:
         version: ${{ steps.generate-next-tag.outputs.version }}
-      
