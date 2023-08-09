@@ -28,7 +28,7 @@ jobs:
       uses: bucketplace/ci/.github/actions/multimodule-changelog@latest
       with:
         module: ''
-        divider: ''
+        divider: 'v'
         bump: ${{ inputs.bump }}
   release:
     needs: changelog
