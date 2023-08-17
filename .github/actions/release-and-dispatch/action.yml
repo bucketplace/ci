@@ -23,6 +23,10 @@ inputs:
     description: "Tag의 Version 뒤에 날짜를 붙일지 여부"
     default: "false"
     required: false
+  commit:
+    description: "SHA or Ref for the target commit, default is github.sha"
+    default: ""
+    required: false
   
 runs:
   using: composite
@@ -36,6 +40,15 @@ runs:
           echo "suffix=" >> "$GITHUB_OUTPUT"
         fi
       shell: bash
+    - name: Get Çommitish
+      id: get-commit
+      run: |
+        if [[ "${{ inputs.commit }}" == "" ]]; then
+          echo "commit=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+        else 
+          echo "commit=${{ inputs.commit ]}" >> "$GITHUB_OUTPUT"
+        fi
+      shell: bash
     - name: "Create Release for Version (${{ inputs.next-tag }})"
       uses: ncipollo/release-action@v1
       with:
@@ -43,6 +56,7 @@ runs:
         name: ${{ inputs.next-tag }}${{ steps.get-date-suffix.outputs.suffix }}
         makeLatest: ${{ inputs.latest }}
         body: ${{ inputs.changelog }}
+        commit: ${{ steps.get-commit.outputs.commit }}
     - name: trigger workflow with versions
       if: ${{ inputs.workflow-file != '' }}
       uses: benc-uk/workflow-dispatch@v1
