@@ -46,7 +46,7 @@ runs:
         if [[ "${{ inputs.commit }}" == "" ]]; then
           echo "commit=${{ github.sha }}" >> "$GITHUB_OUTPUT"
         else 
-          echo "commit=${{ inputs.commit ]}" >> "$GITHUB_OUTPUT"
+          echo "commit=${{ inputs.commit }}" >> "$GITHUB_OUTPUT"
         fi
       shell: bash
     - name: "Create Release for Version (${{ inputs.next-tag }})"
