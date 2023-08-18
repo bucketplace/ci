@@ -6,27 +6,27 @@ on:
       app-path:
         description: "Specifies a base directory to run the task from"
         required: false
-        default: '.'
+        default: "."
         type: string
       nodejs-version:
         description: "Specifies which Node.js version to use"
         required: false
-        default: '18'
+        default: "18"
         type: string
       package-manager:
         description: "Specifies which package manager to use"
         required: false
-        default: ''
+        default: ""
         type: string
       build-command:
         description: "Specifies a build command used on package finalizing before publish"
         required: false
-        default: 'build'
+        default: "build"
         type: string
       prerelease-tag:
         description: "Specifies a tag name that is used for prerelease mode"
         required: false
-        default: 'pre'
+        default: "pre"
         type: string
     secrets:
       NEXUS_NPM_TOKEN:
@@ -40,7 +40,7 @@ env:
 jobs:
   prerelease:
     name: Run Changesets prerelease
-    runs-on: [self-hosted, Linux, X64, cache, node-16]
+    runs-on: [self-hosted, Linux, X64, cache, node-18]
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}
@@ -76,7 +76,7 @@ jobs:
       - name: Commit
         uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
         with:
-          add: '.'
+          add: "."
           committer_name: bp-deployer
           committer_email: bp-deployer@users.noreply.github.com
-          message: '[skip actions] Prerelease ${{inputs.prerelease-tag}}'
+          message: "[skip actions] Prerelease ${{inputs.prerelease-tag}}"

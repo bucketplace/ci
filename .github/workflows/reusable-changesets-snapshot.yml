@@ -6,22 +6,22 @@ on:
       app-path:
         description: "Specifies a base directory to run the task from"
         required: false
-        default: '.'
+        default: "."
         type: string
       nodejs-version:
         description: "Specifies which Node.js version to use"
         required: false
-        default: '18'
+        default: "18"
         type: string
       package-manager:
         description: "Specifies which package manager to use"
         required: false
-        default: ''
+        default: ""
         type: string
       build-command:
         description: "Specifies a build command used on package finalizing before publish"
         required: false
-        default: 'build'
+        default: "build"
         type: string
       branch:
         description: "Specifies which branch ref to use on checkout"
@@ -31,7 +31,7 @@ on:
       snapshot-tag:
         description: "Specifies a tag name that is used for snapshot release"
         required: false
-        default: 'snap'
+        default: "snap"
         type: string
     outputs:
       pkg-version-name-pairs:
@@ -49,7 +49,7 @@ env:
 jobs:
   snapshot:
     name: Run Changesets snapshot
-    runs-on: [self-hosted, Linux, X64, cache, node-16]
+    runs-on: [self-hosted, Linux, X64, cache, node-18]
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}

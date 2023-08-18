@@ -6,27 +6,27 @@ on:
       app-path:
         description: "Specifies a base directory to run the task from"
         required: false
-        default: '.'
+        default: "."
         type: string
       nodejs-version:
         description: "Specifies which Node.js version to use"
         required: false
-        default: '18'
+        default: "18"
         type: string
       package-manager:
         description: "Specifies which package manager to use"
         required: false
-        default: ''
+        default: ""
         type: string
       test-command:
         description: "Specifies a test command that will be passed to the package manager"
         required: false
-        default: 'test'
+        default: "test"
         type: string
       test-command-args:
         description: "Specifies an optional arguments to the test command"
         required: false
-        default: ''
+        default: ""
         type: string
 
 env:
@@ -36,7 +36,7 @@ env:
 jobs:
   run-test:
     name: Run Node.js test
-    runs-on: [self-hosted, Linux, X64, cache, node-16]
+    runs-on: [self-hosted, Linux, X64, cache, node-18]
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}
