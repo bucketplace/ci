@@ -61,7 +61,7 @@ jobs:
       - name: Build packages
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
       - name: Try to exit Changesets prerelease mode
-        uses: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset pre exit
+        run: ${{ steps.pkg-manager.outputs.exec-cmd }} changeset pre exit
       - name: Publish package
         uses: changesets/action@v1
         with:
