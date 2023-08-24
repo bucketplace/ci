@@ -1,0 +1,76 @@
+name: "SonarCloud: FE"
+
+on:
+  workflow_call:
+    inputs:
+      app-path:
+        description: "Specifies a base directory to run the task from"
+        required: false
+        default: "."
+        type: string
+      nodejs-version:
+        description: "Specifies which Node.js version to use"
+        required: false
+        default: "18"
+        type: string
+      package-manager:
+        description: "Specifies which package manager to use"
+        required: false
+        default: ""
+        type: string
+      lint-command:
+        description: "Specifies a lint command that will be passed to the package manager"
+        required: false
+        default: "sonarcloud:lint"
+        type: string
+      lint-command-args:
+        description: "Specifies an optional arguments to the lint command"
+        required: false
+        default: ""
+        type: string
+      lcov-command:
+        description: "Specifies a code coverage command that will be passed to the package manager"
+        required: false
+        default: "sonarcloud:lcov"
+        type: string
+      lcov-command-args:
+        description: "Specifies an optional arguments to the code coverage command"
+        required: false
+        default: ""
+        type: string
+
+env:
+  NODE_ENV: development # This must always be set. Otherwise, required dependencies to run test will not be installed or inconsistency happens.
+  CI: true
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Report
+    runs-on: [self-hosted, Linux, X64, cache, node-18]
+    defaults:
+      run:
+        working-directory: ${{ inputs.app-path }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Use Node.js ${{ inputs.nodejs-version }}
+        run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
+      - name: Determine which package manager to use
+        id: pkg-manager
+        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
+        with:
+          app-path: ${{ inputs.app-path }}
+          package-manager: ${{ inputs.package-manager }}
+      - name: Install dependencies
+        run: ${{ steps.pkg-manager.outputs.install-cmd }}
+      - name: Run lint and report
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.lint-command }} ${{ inputs.lint-command-args }}
+      - name: Collect test coverage report
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.lcov-command }} ${{ inputs.lcov-command-args }}
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
