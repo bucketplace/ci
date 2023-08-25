@@ -16,6 +16,11 @@ on:
         description: "앱 기준 디렉토리"
         required: false
         default: "."
+      mortar-version:
+        type: string
+        description: "mortar 버전 (JVM 17이상시 v2, 이하시 v1)"
+        required: false
+        default: "v1"
       gradlew-path:
         type: string
         description: "gradlew가 있는 path"
@@ -47,7 +52,7 @@ on:
 jobs:
   check-and-report:
     name: Lint, Test And Reports
-    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    runs-on: [ "self-hosted", "Linux", "X64", "mortar", ${{ inputs.mortar-version }} ]
     steps:
       - name: Load Build Cache
         id: load-build-cache
