@@ -52,7 +52,7 @@ on:
 jobs:
   check-and-report:
     name: Lint, Test And Reports
-    runs-on: [ "self-hosted", "Linux", "X64", "mortar", ${{ inputs.mortar-version }} ]
+    runs-on: [ "self-hosted", "Linux", "X64", "mortar", "${{ inputs.mortar-version }}" ]
     steps:
       - name: Load Build Cache
         id: load-build-cache
