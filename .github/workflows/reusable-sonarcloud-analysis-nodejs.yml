@@ -38,6 +38,10 @@ on:
         required: false
         default: ""
         type: string
+    secrets:
+      SONAR_TOKEN:
+        description: "A SonarCloud token for uploading reports"
+        required: true
 
 env:
   NODE_ENV: development # This must always be set. Otherwise, required dependencies to run test will not be installed or inconsistency happens.
