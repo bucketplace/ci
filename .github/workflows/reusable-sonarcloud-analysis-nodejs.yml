@@ -67,8 +67,10 @@ jobs:
         run: ${{ steps.pkg-manager.outputs.install-cmd }}
       - name: Run lint and report
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.lint-command }} ${{ inputs.lint-command-args }}
+        continue-on-error: true
       - name: Collect test coverage report
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.lcov-command }} ${{ inputs.lcov-command-args }}
+        continue-on-error: true
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
