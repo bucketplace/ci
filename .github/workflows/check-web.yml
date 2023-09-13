@@ -84,7 +84,7 @@ jobs:
           fi
       - name: Run SonarCloud prepare
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
-        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud }} ${{ inputs.sonarcloud-command-args }}
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud-command }} ${{ inputs.sonarcloud-command-args }}
         continue-on-error: true
       - name: SonarCloud scan
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
