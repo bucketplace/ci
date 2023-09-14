@@ -1,0 +1,94 @@
+name: "Check Web"
+
+on:
+  workflow_call:
+    inputs:
+      app-path:
+        description: "Specifies a base directory to run the task from"
+        required: false
+        default: "."
+        type: string
+      nodejs-version:
+        description: "Specifies which Node.js version to use"
+        required: false
+        default: "18"
+        type: string
+      package-manager:
+        description: "Specifies which package manager to use (leave empty to auto-detect)"
+        required: false
+        default: ""
+        type: string
+      test-command:
+        description: "Specifies a script name that runs tests"
+        required: false
+        default: "test"
+        type: string
+      test-command-args:
+        description: "Specifies optional arguments to the test command"
+        required: false
+        default: ""
+        type: string
+      sonarcloud-command:
+        description: "Specifies a script name that will prepare materials for uploading to SonarCloud (executed only when there's SonarCloud config exists)"
+        required: false
+        default: "sonarcloud"
+        type: string
+      sonarcloud-command-args:
+        description: "Specifies optional arguments to the sonarcloud command"
+        required: false
+        default: ""
+        type: string
+    secrets:
+      SONAR_TOKEN:
+        description: "A SonarCloud token for uploading reports"
+        required: false
+
+env:
+  NODE_ENV: development # This must always be set. Otherwise, required dependencies to run test will not be installed or inconsistency happens.
+  CI: true
+
+jobs:
+  run-checks:
+    name: Run checks and report
+    runs-on: [self-hosted, Linux, X64, cache, node-18]
+    defaults:
+      run:
+        working-directory: ${{ inputs.app-path }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Use Node.js v${{ inputs.nodejs-version }}
+        run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
+      - name: Determine which package manager to use
+        id: pkg-manager
+        uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
+        with:
+          app-path: ${{ inputs.app-path }}
+          package-manager: ${{ inputs.package-manager }}
+      - name: Install dependencies
+        run: ${{ steps.pkg-manager.outputs.install-cmd }}
+      - name: Run test
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
+      - name: Check whether SonarCloud is configured
+        id: check-sonarcloud-configured
+        shell: bash
+        run: |
+          if [[ -f "${{ inputs.app-path }}/sonar-project.properties" ]]; then
+            echo "SonarCloud configuration detected, will run analysis."
+            echo "sonar-ready=true" >> $GITHUB_OUTPUT
+          else
+            echo "SonarCloud configuration not detected, will skip analysis."
+            echo "sonar-ready=false" >> $GITHUB_OUTPUT
+          fi
+      - name: Run SonarCloud prepare
+        if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud-command }} ${{ inputs.sonarcloud-command-args }}
+        continue-on-error: true
+      - name: SonarCloud scan
+        if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # Needed to get PR information, if any
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
