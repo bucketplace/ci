@@ -82,7 +82,7 @@ jobs:
             echo "SonarCloud configuration not detected, will skip analysis."
             echo "sonar-ready=false" >> $GITHUB_OUTPUT
           fi
-          node -e "process.stdout.write(`prepare-script=${String(require('./package.json')?.scripts?.sonarcloud != null)}`)" 2>&1 >> $GITHUB_OUTPUT
+          node -e "process.stdout.write('prepare-script=' + String(require('./package.json')?.scripts?.sonarcloud != null))" 2>&1 >> $GITHUB_OUTPUT
       - name: Run SonarCloud prepare
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true' && steps.check-sonarcloud-configured.outputs.prepare-script == 'true'
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud-command }} ${{ inputs.sonarcloud-command-args }}
