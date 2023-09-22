@@ -39,8 +39,14 @@ on:
         default: ""
         type: string
     secrets:
+      DOCKERHUB_USERNAME:
+        description: "The Docker Hub username for logging in"
+        required: false
+      DOCKERHUB_TOKEN:
+        description: "The Docker Hub token for logging in"
+        required: false
       SONAR_TOKEN:
-        description: "A SonarCloud token for uploading reports"
+        description: "The SonarCloud token for uploading reports"
         required: false
 
 env:
@@ -86,6 +92,12 @@ jobs:
       - name: Run SonarCloud prepare
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true' && steps.check-sonarcloud-configured.outputs.prepare-script == 'true'
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud-command }} ${{ inputs.sonarcloud-command-args }}
+      - name: Login to Docker Hub
+        if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - name: SonarCloud scan
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
         uses: SonarSource/sonarcloud-github-action@master
