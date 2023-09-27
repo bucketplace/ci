@@ -75,7 +75,7 @@ jobs:
         id: check-sonarcloud-configured
         shell: bash
         run: |
-          if [[ -f "${{ inputs.app-path }}/sonar-project.properties" ]]; then
+          if [[ -f "sonar-project.properties" ]]; then
             echo "SonarCloud configuration detected, will run analysis."
             echo "sonar-ready=true" >> $GITHUB_OUTPUT
           else
