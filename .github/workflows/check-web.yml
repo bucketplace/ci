@@ -18,6 +18,16 @@ on:
         required: false
         default: ""
         type: string
+      prepare-command:
+        description: "Specifies a script name that runs bootstrapping tasks"
+        required: false
+        default: "test:prepare"
+        type: string
+      prepare-command-args:
+        description: "Specifies optional arguments to the prepare command"
+        required: false
+        default: ""
+        type: string
       test-command:
         description: "Specifies a script name that runs tests"
         required: false
@@ -75,6 +85,13 @@ jobs:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
         run: ${{ steps.pkg-manager.outputs.install-cmd }}
+      - name: Check whether prepare script is present
+        id: check-test-configured
+        shell: bash
+        run: node -e "process.stdout.write('test-prepare=' + String(require('./package.json')?.scripts?.['${{ inputs.prepare-command }}'] != null))" 2>&1 >> $GITHUB_OUTPUT
+      - name: Run prepare script
+        if: steps.check-test-configured.outputs.test-prepare == 'true'
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.prepare-command }} ${{ inputs.prepare-command-args }}
       - name: Run test
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
       - name: Check whether SonarCloud is configured
@@ -88,9 +105,9 @@ jobs:
             echo "SonarCloud configuration not detected, will skip analysis."
             echo "sonar-ready=false" >> $GITHUB_OUTPUT
           fi
-          node -e "process.stdout.write('prepare-script=' + String(require('./package.json')?.scripts?.sonarcloud != null))" 2>&1 >> $GITHUB_OUTPUT
+          node -e "process.stdout.write('sonar-prepare=' + String(require('./package.json')?.scripts?.['${{ inputs.sonarcloud-command }}'] != null))" 2>&1 >> $GITHUB_OUTPUT
       - name: Run SonarCloud prepare
-        if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true' && steps.check-sonarcloud-configured.outputs.prepare-script == 'true'
+        if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true' && steps.check-sonarcloud-configured.outputs.sonar-prepare == 'true'
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud-command }} ${{ inputs.sonarcloud-command-args }}
       - name: Login to Docker Hub
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
