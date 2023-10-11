@@ -106,7 +106,7 @@ jobs:
             echo "sonar-ready=false" >> $GITHUB_OUTPUT
           fi
           node -e "process.stdout.write('sonar-prepare=' + String(require('./package.json')?.scripts?.['${{ inputs.sonarcloud-command }}'] != null))" 2>&1 >> $GITHUB_OUTPUT
-      - name: Run SonarCloud prepare
+      - name: Run SonarCloud prepare script
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true' && steps.check-sonarcloud-configured.outputs.sonar-prepare == 'true'
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud-command }} ${{ inputs.sonarcloud-command-args }}
       - name: Login to Docker Hub
