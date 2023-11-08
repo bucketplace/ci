@@ -85,6 +85,10 @@ jobs:
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
         run: ${{ steps.pkg-manager.outputs.install-cmd }}
+      - name: Calculate available system memory for heap allocation
+        id: calc-system-memory
+        shell: bash
+        run: echo "available=$(expr $(echo "$(free -m)" | awk '/^Mem:/ {print $2}') - 512)" >> $GITHUB_OUTPUT
       - name: Check whether prepare script is present
         id: check-test-configured
         shell: bash
@@ -94,6 +98,8 @@ jobs:
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.prepare-command }} ${{ inputs.prepare-command-args }}
       - name: Run test
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.test-command }} ${{ inputs.test-command-args }}
+        env:
+          NODE_OPTIONS: --max-old-space-size=${{ steps.calc-system-memory.outputs.available }}
       - name: Check whether SonarCloud is configured
         id: check-sonarcloud-configured
         shell: bash
@@ -109,6 +115,8 @@ jobs:
       - name: Run SonarCloud prepare script
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true' && steps.check-sonarcloud-configured.outputs.sonar-prepare == 'true'
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.sonarcloud-command }} ${{ inputs.sonarcloud-command-args }}
+        env:
+          NODE_OPTIONS: --max-old-space-size=${{ steps.calc-system-memory.outputs.available }}
       - name: Login to Docker Hub
         if: steps.check-sonarcloud-configured.outputs.sonar-ready == 'true'
         uses: docker/login-action@v2
