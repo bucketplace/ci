@@ -64,10 +64,10 @@ jobs:
         uses: madhead/semver-utils@latest
         with:
           version: ${{ steps.get-current-version.outputs.result }}
-      - name: Generate Next Version(Major)
+      - name: Generate Next Version
         id: generate-next-version
         run: |
-          GEN_VERSION="${{ steps.version.outputs.inc-major }}"
+          GEN_VERSION="${{ steps.version.outputs.inc-patch }}"
           echo "updated-version=${GEN_VERSION}" >> $GITHUB_OUTPUT
         shell: bash
 
@@ -146,6 +146,8 @@ jobs:
 
   get-metadata:
     runs-on: [self-hosted, Linux, X64, cache]
+    needs: check-comment
+    if: needs.check-comment.outputs.triggered == 'true'
     outputs:
       pr_ref: ${{ fromJson(steps.get_pull_request_ref.outputs.data).head.ref }}
       pr_title: ${{ fromJson(steps.get_pull_request_ref.outputs.data).title }}
