@@ -64,10 +64,10 @@ jobs:
         uses: madhead/semver-utils@latest
         with:
           version: ${{ steps.get-current-version.outputs.result }}
-      - name: Generate Next Version
+      - name: Generate Next Version(Major)
         id: generate-next-version
         run: |
-          GEN_VERSION="${{ steps.version.outputs.inc-patch }}"
+          GEN_VERSION="${{ steps.version.outputs.inc-major }}"
           echo "updated-version=${GEN_VERSION}" >> $GITHUB_OUTPUT
         shell: bash
 
