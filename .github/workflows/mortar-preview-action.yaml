@@ -1,0 +1,218 @@
+name: Mortar Preview Action
+
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: "배포할 애플리케이션"
+        type: string
+        required: true
+      profile:
+        description: "배포 환경"
+        type: string
+        required: true
+      ecr-repository:
+        type: string
+        required: true
+      base-domain:
+        type: string
+        required: true
+      destination:
+        type: string
+        required: true
+      working-directory:
+        type: string
+        required: true
+      account-type:
+        type: string
+        required: true
+      mortar-config:
+        description: "Mortar 설정 파일 경로"
+        type: string
+        required: true
+
+jobs:
+  check-comment:
+    runs-on: [ self-hosted, Linux, X64, no-cache ]
+    if: github.event.action != 'closed'
+    outputs:
+      triggered: ${{ steps.check.outputs.triggered }}
+    steps:
+      - uses: bucketplace/comment-trigger@v1.0
+        id: check
+        with:
+          trigger: '/preview ${{ inputs.application }}'
+          reaction: rocket
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+
+  get-updated-version:
+    name: Get Updated Version
+    runs-on: [ self-hosted, Linux, X64, mortar, v2 ]
+    env:
+      DEBUG: true
+    outputs:
+      updated-version: ${{ steps.generate-next-version.outputs.updated-version }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - id: get-current-version
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq '.version' ${{ inputs.mortar-config }}
+      - id: version
+        uses: madhead/semver-utils@latest
+        with:
+          version: ${{ steps.get-current-version.outputs.result }}
+      - name: Generate Next Version
+        id: generate-next-version
+        run: |
+          GEN_VERSION="${{ steps.version.outputs.inc-patch }}"
+          echo "updated-version=${GEN_VERSION}" >> $GITHUB_OUTPUT
+        shell: bash
+
+  build-and-push:
+    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    needs: [check-comment, get-updated-version]
+    if: needs.check-comment.outputs.triggered == 'true'
+    env:
+      DEBUG: true
+      APP_PROFILE: ${{ inputs.profile }}
+    outputs:
+      version: ${{ steps.mortar-deploy.outputs.app-version }}
+    steps:
+      - name: Resolve AWS environment
+        id: aws
+        run: |
+          if [ "${{ inputs.account-type }}" == "DATA" ] 
+          then
+            echo "::add-mask::${{ secrets.DATA_AWS_ACCESS_KEY_ID }}"
+            echo "access_key_id=${{ secrets.DATA_AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "::add-mask::${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}"
+            echo "secret_access_key=${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "::add-mask::${{ secrets.DATA_AWS_ACCOUNT_ID }}"
+            echo "account_id=${{ secrets.DATA_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.account-type }}" == "DEV" ] 
+          then
+            echo "::add-mask::${{ secrets.DEV_AWS_ACCESS_KEY_ID }}"
+            echo "access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "::add-mask::${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}"
+            echo "secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "::add-mask::${{ secrets.DEV_AWS_ACCOUNT_ID }}"
+            echo "account_id=${{ secrets.DEV_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          else
+            echo "::add-mask::${{ secrets.AWS_ACCESS_KEY_ID }}"
+            echo "access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "::add-mask::${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            echo "secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "::add-mask::${{ secrets.AWS_ACCOUNT_ID }}"
+            echo "account_id=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+          fi
+        shell: bash
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+      - name: Change mortar version
+        uses: mikefarah/yq@master
+        with:
+          cmd: >
+            yq -i
+            '.version = "${{ needs.get-updated-version.outputs.updated-version }}"'
+            ${{ inputs.mortar-config }}
+      - name: Mortar Deploy
+        id: mortar-deploy
+        uses: bucketplace/mortar-deploy-action@v1
+        with:
+          aws-access-key-id: ${{ steps.aws.outputs.access_key_id }}
+          aws-secret-access-key: ${{ steps.aws.outputs.secret_access_key }}
+          aws-region: ap-northeast-2
+          nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
+          prod: false
+          config: ${{ inputs.mortar-config }}
+          create-ecr-repo: true
+      - name: Report Summary
+        run: |
+          cat > $GITHUB_STEP_SUMMARY << EOF
+          ### Deployment Information
+          배포가 실행되었습니다. :rocket:
+          | Key | Value |
+          | --- | --- |
+          | Application | ${{ inputs.application }} |
+          | Environment | ${{ env.APP_PROFILE }} |
+          | Application Version | ${{ inputs.version }} |
+          | Deployed By | @${{ github.actor }} |
+          EOF
+
+  get-metadata:
+    runs-on: [self-hosted, Linux, X64, cache]
+    outputs:
+      pr_ref: ${{ fromJson(steps.get_pull_request_ref.outputs.data).head.ref }}
+      pr_title: ${{ fromJson(steps.get_pull_request_ref.outputs.data).title }}
+      pr_url: ${{ fromJson(steps.get_pull_request_ref.outputs.data).html_url }}
+      pr_assignee: ${{ fromJson(steps.get_pull_request_ref.outputs.data).assignee.login }}
+    steps:
+      - name: get pull request ref
+        id: get_pull_request_ref
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/:repository/pulls/:issue_id
+          repository: ${{ github.repository }}
+          issue_id: ${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+  preview-request:
+    runs-on: [ self-hosted, Linux, X64, no-cache ]
+    needs: [get-metadata, build-and-push]
+    steps:
+      - name: Preview request
+        id: pr
+        uses: bucketplace/preview-request-action@v2.1.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ inputs.APPLICATION }}
+          branch: ${{ needs.get-metadata.outputs.pr_ref }}
+          release-name-length: 40
+          pr-title: ${{ needs.get-metadata.outputs.pr_title }}
+          pr-url: ${{ needs.get-metadata.outputs.pr_url }}
+          pr-assignee: ${{ needs.bget-metadata.outputs.pr_assignee }}
+          profile: ${{ inputs.profile }}
+          image-tag: ${{ needs.build-and-push.outputs.version }}
+          base-domain: ${{ inputs.base-domain }}
+          destination: ${{ inputs.destination }}
+      - name: Comment on PR
+        uses: bucketplace/pull-request-add-comment-action@main
+        with:
+          message: |-
+            🚀 preview endpoint 가 생성되었습니다. [link](https://${{ steps.pr.outputs.endpoint }})
+            ```
+            https://${{ steps.pr.outputs.endpoint }}
+            ```
+            🎁 preview context
+            ```json
+            ${{ steps.pr.outputs.context }}
+            ```
+          GITHUB_TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+      - if: ${{ failure() }}
+        uses: bucketplace/pull-request-add-comment-action@main
+        with:
+          message: |-
+            preview 배포 실패
+          GITHUB_TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+
+  clean-up-preview:
+    runs-on: [ self-hosted, Linux, X64, no-cache ]
+    if: github.event.action == 'closed'
+    steps:
+      - name: Clean up preview resources
+        uses: bucketplace/preview-delete-action@v2.1.0
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ inputs.APPLICATION }}
+          branch: ${{ github.head_ref }}
+          release-name-length: 40
