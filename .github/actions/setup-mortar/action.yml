@@ -11,10 +11,10 @@ runs:
   steps:
     - name: checkout
       uses: actions/checkout@v3
-    - uses: chrisdickinson/setup-yq@latest
+    - uses: chrisdickinson/setup-yq@v2
     - name: Extract Mortar Version
       id: extract-mortar-version
-      run: echo version="$(yq '.mortarVersion' ${{ inputs.config }})"
+      run: echo version="$(yq eval '.mortarVersion' ${{ inputs.config }})"
       shell: bash
     - name: Pull Mortar build image
       shell: bash
