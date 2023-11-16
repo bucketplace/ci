@@ -28,6 +28,6 @@ runs:
       run: |
         docker run --interactive -e TERM=xterm-256color -e DEBUG=true \
         --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar_cli \
-        --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app \
+        --user=root --rm --mount type=bind,source==${GITHUB_WORKSPACE}/${{ inputs.config }},target=/app \
         hub.co-workerhou.se/platform/mortar-build:${{ steps.extract-mortar-version.outputs.version }} \
           
