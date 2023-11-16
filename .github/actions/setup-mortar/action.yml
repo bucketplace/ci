@@ -14,7 +14,7 @@ runs:
     - uses: chrisdickinson/setup-yq@latest
     - name: Extract Mortar Version
       id: extract-mortar-version
-      run: echo version="$(yq mortarVersion ${{ inputs.config }})" >> $GITHUB_OUTPUT
+      run: echo version="$(yq eval '.mortarVersion' ${{ inputs.config }})" >> $GITHUB_OUTPUT
       shell: bash
     - name: Pull Mortar build image
       shell: bash
