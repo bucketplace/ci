@@ -22,7 +22,7 @@ runs:
     - name: Pull Mortar build image
       shell: bash
       run: |
-        docker pull hub.co-workerhou.se/platform/mortar-build:${{ steps.extract-mortar-version.outputs.result }}
+        docker pull hub.co-workerhou.se/platform/mortar-build:"${{ steps.extract-mortar-version.outputs.result }}"
     - name: Mount Mortar Remote
       shell: bash
       run: |
