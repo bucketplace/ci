@@ -17,7 +17,7 @@ runs:
     - name: Extract Mortar Version
       id: extract-mortar-version
       run: |-
-        echo version=$(yq eval '.mortarVersion' ${{ inputs.config }})
+        echo version=$(yq eval '.mortarVersion' ${{ inputs.config }}) >> $GITHUB_OUTPUT
       shell: bash
     - name: Pull Mortar build image
       shell: bash
