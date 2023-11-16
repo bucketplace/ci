@@ -22,12 +22,12 @@ runs:
     - name: Pull Mortar build image
       shell: bash
       run: |
-        docker pull hub.co-workerhou.se/platform/mortar-build:"${{ steps.extract-mortar-version.outputs.result }}"
+        docker pull hub.co-workerhou.se/platform/mortar-build:"${{ steps.extract-mortar-version.outputs.version }}"
     - name: Mount Mortar Remote
       shell: bash
       run: |
         docker run --interactive --tty -e TERM=xterm-256color -e DEBUG=true \
         --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar_cli \
         --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app \
-        hub.co-workerhou.se/platform/mortar-build:${{ steps.extract-mortar-version.outputs.result }} \
+        hub.co-workerhou.se/platform/mortar-build:${{ steps.extract-mortar-version.outputs.version }} \
           
