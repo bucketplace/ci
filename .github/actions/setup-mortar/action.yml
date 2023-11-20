@@ -14,19 +14,23 @@ runs:
 
       # nexus 에서 mortar-remote 받아오고
     - name: Download artifact
-      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.9/mortar_Darwin_arm64.tar.gz --output mortar
+      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.8/mortar_Darwin_arm64.tar.gz --output mortar-remote
 #      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.9/mortar_Darwin_arm64.tar.gz
       shell: bash
 
-      # mortar-cli 해당 버전을 unzip 해 주고
+      # mortar-remote 해당 버전을 unzip 해 주고
     - name: Unzip artifact
-      run: tar -zxvf mortar # dynamic하게 mortar-cli 버전을 받아오도록 수정 필요
+      run: tar -zxvf mortar-remote # dynamic하게 mortar-cli 버전을 받아오도록 수정 필요
+      shell: bash
+
+    - name: Execute mortar
+      run: ./mortar --version
       shell: bash
 
       # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
     - name: Mount Mortar Remote
       run: |
-        docker run --interactive --tty -e TERM=xterm-256color -e DEBUG=true \
+        docker run TERM=xterm-256color -e DEBUG=true \
         --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar_cli \
         --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app \
         mortar_Darwin_arm64 \
