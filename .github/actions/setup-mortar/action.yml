@@ -30,8 +30,7 @@ runs:
       # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
     - name: Mount Mortar Remote
       run: |
-        docker run TERM=xterm-256color -e DEBUG=true \
+        docker run DEBUG=true \
         --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar_cli \
-        --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app \
-        mortar_Darwin_arm64 \
+        --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app
       shell: bash
