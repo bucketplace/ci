@@ -14,15 +14,13 @@ runs:
 
       # nexus 에서 mortar-remote 받아오고
     - name: Download artifact
-      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.9/
-      mortar_Darwin_arm64.tar.gz -H "accept: application/json" --output mortar
-
+      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.9/mortar_Darwin_arm64.tar.gz --output mortar
 #      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.9/mortar_Darwin_arm64.tar.gz
       shell: bash
 
       # mortar-cli 해당 버전을 unzip 해 주고
     - name: Unzip artifact
-      run: unzip mortar_Darwin_arm64.tar.gz # dynamic하게 mortar-cli 버전을 받아오도록 수정 필요
+      run: tar -zxvf mortar # dynamic하게 mortar-cli 버전을 받아오도록 수정 필요
       shell: bash
 
       # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
@@ -33,25 +31,3 @@ runs:
         --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app \
         mortar_Darwin_arm64 \
       shell: bash
-
-      # 해당 부분 밑으로는 다 삭제 필요
-    - uses: chrisdickinson/setup-yq@latest
-      with:
-        yq-version: v4.9.8
-    - name: Extract Mortar Version
-      id: extract-mortar-version
-      run: |-
-        echo version=$(yq eval '.mortarVersion' ${{ inputs.config }}) >> $GITHUB_OUTPUT
-      shell: bash
-    - name: Pull Mortar build image
-      shell: bash
-      run: |
-        docker pull hub.co-workerhou.se/platform/mortar-build:"${{ steps.extract-mortar-version.outputs.version }}"
-    - name: Mount Mortar Remote
-      shell: bash
-      run: |
-        docker run --interactive -e TERM=xterm-256color -e DEBUG=true \
-        --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar \
-        --user=root --rm --mount type=bind,source=${GITHUB_WORKSPACE}/${{ inputs.config }},target=${GITHUB_WORKSPACE}/app \
-        hub.co-workerhou.se/platform/mortar-build:${{ steps.extract-mortar-version.outputs.version }} \
-          
