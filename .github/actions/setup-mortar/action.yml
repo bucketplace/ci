@@ -23,13 +23,10 @@ runs:
       run: tar -zxvf mortar-remote # dynamic하게 mortar-cli 버전을 받아오도록 수정 필요
       shell: bash
 
-    - name: Grant Permission
-      run: chmod +x ./mortar
+    - name: Grant Permission and run mortar version
+      run: chmod +x ./mortar && ./mortar version
       shell: bash
 
-    - name: Check Mortar Version
-      run: DEBUG=true ./mortar version
-      shell: bash
 #
 #      # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
 #    - name: Mount Mortar Remote
