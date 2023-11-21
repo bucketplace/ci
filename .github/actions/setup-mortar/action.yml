@@ -30,7 +30,6 @@ runs:
      # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
     - name: Mount Mortar Remote
       run: |
-        docker image prune && docker run DEBUG=true \
-        --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar \
+        docker run --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar \
         --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app hub.co-workerhou.se/platform/mortar-build:2.1.0
       shell: bash
