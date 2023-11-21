@@ -15,7 +15,7 @@ runs:
       # nexus 에서 mortar-remote 받아오고
     - name: Download artifact
       run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.1.0/mortar_Linux_x86_64.tar.gz --output mortar-remote
-#      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.9/mortar_Darwin_arm64.tar.gz
+      #      run: curl -L -X GET https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/2.0.9/mortar_Darwin_arm64.tar.gz
       shell: bash
 
       # mortar-remote 해당 버전을 unzip 해 주고
@@ -23,15 +23,14 @@ runs:
       run: tar -zxvf mortar-remote # dynamic하게 mortar-cli 버전을 받아오도록 수정 필요
       shell: bash
 
-    - name: Grant Permission and run mortar version
-      run: chmod +x ./mortar && ./mortar version
+    - name: Grant Permission
+      run: chmod +x ./mortar
       shell: bash
 
-#
-#      # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
-#    - name: Mount Mortar Remote
-#      run: |
-#        docker image prune && docker run DEBUG=true \
-#        --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar_cli \
-#        --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app
-#      shell: bash
+     # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
+    - name: Mount Mortar Remote
+      run: |
+        docker image prune && docker run DEBUG=true \
+        --mount type=bind,source=/var/run/docker.sock,target=/var/run/docker.sock --name mortar \
+        --user=root --rm --mount type=bind,source=${{ inputs.config }},target=/app hub.co-workerhou.se/platform/mortar-build:2.1.0
+      shell: bash
