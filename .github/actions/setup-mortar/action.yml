@@ -27,6 +27,12 @@ runs:
       run: chmod +x ./mortar
       shell: bash
 
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: mortar
+        path: ./mortar
+
 #     # unzip 해 준 mortar-cli가 mortar deploy시 사용할 수 있도록 mount 해 준다
 #    - name: Mount Mortar Remote
 #      run: |
