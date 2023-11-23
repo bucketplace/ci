@@ -12,7 +12,8 @@ async function setup() {
         const pathToCLI = await tc.extractTar(pathToTarball);
 
         // Expose the tool by adding it to the PATH
-        core.addPath(pathToCLI)
+        const path = core.addPath(pathToCLI)
+        console.log(`Added ${pathToCLI} to PATH: ${path}`);
     } catch (e) {
         core.setFailed(e);
     }
