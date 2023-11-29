@@ -13,5 +13,6 @@
     "@actions/github": "^6.0.0",
     "axios": "^1.6.2"
   },
+  "devDependencies": {},
   "description": ""
 }
