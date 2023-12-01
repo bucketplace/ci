@@ -47,7 +47,7 @@ inputs:
     description: "is production or not"
     required: false
     default: "false"
-    
+
 outputs:
   app-version:
     description: "version of deployed package and docker image(tag)"
@@ -90,6 +90,7 @@ runs:
       id: mortar-deploy
       env:
         DEBUG: "true"
+        NO_TTY: "1"
       run: |
         mortar deploy -y \
         --nexus-user="${{ inputs.nexus-user }}" \
@@ -112,4 +113,4 @@ runs:
         app-name: ${{ steps.extract-app-name.outputs.result }}
 
 
-        
+
