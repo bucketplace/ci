@@ -1,0 +1,14 @@
+name: "Check Protobuf Lint"
+on:
+  pull_request:
+    paths:
+      - '**/*.proto'
+jobs:
+  protolint:
+    name: protolint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: yoheimuta/action-protolint@v1
+        with:
+          protolint_flags: -config_path=.protolint.yaml
