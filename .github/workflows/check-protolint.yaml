@@ -1,0 +1,27 @@
+name: "Check Protobuf Lint"
+
+on:
+  workflow_call:
+    secrets:
+      BP_DEPLOYER_GITHUB_TOKEN: # if you need private github module access
+        required: false
+jobs:
+  protolint:
+    name: protolint
+    runs-on: [ self-hosted, Linux, X64, cache ]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Granting private modules access
+        env:
+          TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+        if: env.TOKEN != null
+        run: |
+          git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
+      - uses: yoheimuta/action-protolint@v1
+        with:
+          workdir: ${{ inputs.app-path }}
+          protolint_flags: -config_path=.protolint.yaml
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: true
+          level: error
