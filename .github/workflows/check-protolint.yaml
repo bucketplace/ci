@@ -2,11 +2,16 @@ name: "Check Protobuf Lint"
 
 on:
   workflow_call:
+    inputs:
+      app-name:
+        description: "sonarqube 프로젝트를 선택을 위한 앱 이름"
+        required: true
+        type: string
 
 jobs:
   protolint:
     name: protolint
-    runs-on: [self-hosted, Linux, X64, cache]
+    runs-on: [ self-hosted, Linux, X64, cache ]
     steps:
       - uses: actions/checkout@v4
       - uses: yoheimuta/action-protolint@v1
