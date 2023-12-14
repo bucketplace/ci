@@ -2,12 +2,17 @@ name: "Check Protobuf Lint"
 
 on:
   workflow_call:
-
+    secrets:
+      BP_DEPLOYER_GITHUB_TOKEN: # if you need private github module access
+        required: false
 jobs:
   protolint:
     name: protolint
     runs-on: [ self-hosted, Linux, X64, cache ]
-    permissions: write-all
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
