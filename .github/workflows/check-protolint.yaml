@@ -10,8 +10,8 @@ jobs:
     name: protolint
     runs-on: [ self-hosted, Linux, X64, cache ]
     permissions:
-      contents: write
-      actions: write
+      issues: write
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
