@@ -10,6 +10,7 @@ jobs:
     name: protolint
     runs-on: [ self-hosted, Linux, X64, cache ]
     permissions:
+      contents: write
       issues: write
       pull-requests: write
     steps:
