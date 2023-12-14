@@ -2,12 +2,6 @@ name: "Check Protobuf Lint"
 
 on:
   workflow_call:
-    inputs:
-      config-path:
-        type: string
-        description: "config path of proto lint"
-        required: false
-        default: ".protolint.yaml"
     secrets:
       BP_DEPLOYER_GITHUB_TOKEN: # if you need private github module access
         required: false
@@ -26,4 +20,4 @@ jobs:
           git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
       - uses: yoheimuta/action-protolint@v1
         with:
-          protolint_flags: -config_path=${{ inputs.config-path }}
+          protolint_flags: -config_path=.github/protolint.yaml
