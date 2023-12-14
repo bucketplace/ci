@@ -23,6 +23,5 @@ jobs:
           workdir: ${{ inputs.app-path }}
           protolint_flags: -config_path=.protolint.yaml
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Change reporter level if you need.
-          # GitHub Status Check won't become failure with warning.
+          fail_on_error: true
           level: error
