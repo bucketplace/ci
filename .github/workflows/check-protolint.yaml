@@ -20,10 +20,8 @@ jobs:
           git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
       - uses: yoheimuta/action-protolint@v1
         with:
-          protolint_flags: -config_path=.github/protolint.yaml
+          workdir: ${{ inputs.app-path }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          # Change reviewdog reporter if you need [github-pr-check,github-check,github-pr-review].
-          reporter: github-pr-review
           # Change reporter level if you need.
           # GitHub Status Check won't become failure with warning.
           level: warning
