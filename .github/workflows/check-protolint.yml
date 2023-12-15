@@ -16,6 +16,7 @@ jobs:
       - uses: yoheimuta/action-protolint@v1
         with:
           workdir: ${{ inputs.app-path }}
+          protolint_flags: -config_path=.github/workflows/protolint.yaml
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           level: error
