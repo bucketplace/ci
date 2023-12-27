@@ -2,9 +2,7 @@ name: "Check Protobuf Lint"
 
 on:
   workflow_call:
-    secrets:
-      BP_DEPLOYER_GITHUB_TOKEN: # if you need private github module access
-        required: false
+
 jobs:
   protolint:
     name: protolint
@@ -16,7 +14,7 @@ jobs:
       - uses: yoheimuta/action-protolint@v1
         with:
           workdir: ${{ inputs.app-path }}
-          protolint_flags: -config_path=.github/workflows/.protolint.yaml
+          protolint_flags: -plugin ./plugin_example -config_path=.github/workflows/.protolint.yaml
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           level: error
