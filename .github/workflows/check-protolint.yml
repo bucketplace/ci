@@ -2,6 +2,12 @@ name: "Check Protobuf Lint"
 
 on:
   workflow_call:
+    inputs:
+      app-path:
+        type: string
+        description: "The path to the app directory"
+        required: false
+        default: "."
 
 jobs:
   protolint:
