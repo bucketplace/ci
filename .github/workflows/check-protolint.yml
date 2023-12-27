@@ -8,6 +8,11 @@ on:
         description: "The path to the app directory"
         required: false
         default: "."
+      config-path:
+        type: string
+        description: "The path to the config file"
+        required: false
+        default: ".protolint.yaml"
 
 jobs:
   protolint:
@@ -19,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
-          protolint_flags: -config_path=$GITHUB_WORKSPACE/.protolint.yaml ${{ inputs.app-path }}
+          protolint_flags: -config_path=${{ inputs.config-path }} ${{ inputs.app-path }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           level: error
