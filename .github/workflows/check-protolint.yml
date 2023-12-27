@@ -24,7 +24,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
-          protolint_flags: -config_path=${{ inputs.config-path }} ${{ inputs.app-path }}
+          protolint_flags: -config_dir_path=$GITHUB_WORKSPACE -config_path=${{ inputs.config-path }} ${{ inputs.app-path }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           level: error
