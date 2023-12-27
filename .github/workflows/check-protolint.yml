@@ -12,7 +12,7 @@ on:
 jobs:
   protolint:
     name: protolint
-    runs-on: [ self-hosted, Linux, X64, cache ]
+    runs-on: ubuntu-latest
     permissions: write-all
     steps:
       - name: Checkout code
