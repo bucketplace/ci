@@ -17,8 +17,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Check if .protolint.yaml exists
+        run: |
+          if [ -f .protolint.yaml ]; then
+            echo "File exists."
+          else
+            echo "File does not exist."
+            exit 1
+          fi
       - name: Copy Protolint Config
-        run: cp ${{ github.workspace }}/.github/workflows/.protolint.yaml ${{ inputs.app-path }}
+        working-directory: $GITHUB_WORKSPACE
+        run: cp .protolint.yaml ${{ inputs.app-path }}/
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           protolint_flags: -config_path=$GITHUB_WORKSPACE/${{ inputs.app-path }}/.protolint.yaml ${{ inputs.app-path }}
