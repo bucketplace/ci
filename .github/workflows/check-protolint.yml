@@ -17,9 +17,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Copy Protolint Config
+        run: cp ${{ github.workspace }}/.github/workflows/.protolint.yaml ${{ inputs.app-path }}
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
-          protolint_flags: -config_path=.protolint.yaml .
+          protolint_flags: -config_path=$GITHUB_WORKSPACE/${{ inputs.app-path }}/.protolint.yaml ${{ inputs.app-path }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           level: error
