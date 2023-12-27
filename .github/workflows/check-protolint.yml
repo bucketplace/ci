@@ -1,25 +1,25 @@
 name: "Check Protobuf Lint"
 
-inputs:
-  app-path:
-    type: string
-    description: "The path to the app directory"
-    required: false
-    default: "."
-  config-path:
-    type: string
-    description: "The path to the config file"
-    required: false
-    default: ".protolint.yaml"
+on:
+  workflow_call:
+    inputs:
+      app-path:
+        type: string
+        description: "The path to the app directory"
+        required: false
+        default: "."
 
-runs:
-  permissions: write-all
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    - uses: yoheimuta/action-protolint@v1.2.0
-      with:
-        protolint_flags: -config_dir_path=$GITHUB_WORKSPACE -config_path=${{ inputs.config-path }} ${{ inputs.app-path }}
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        fail_on_error: true
-        level: error
+jobs:
+  protolint:
+    name: protolint
+    runs-on: ubuntu-latest
+    permissions: write-all
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - uses: yoheimuta/action-protolint@v1.2.0
+        with:
+          protolint_flags: -config_path=.protolint.yaml .
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          fail_on_error: true
+          level: error
