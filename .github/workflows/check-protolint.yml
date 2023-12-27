@@ -19,7 +19,7 @@ jobs:
         uses: actions/checkout@v4
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
-          protolint_flags: -plugin ../../example/plugin_example -config_path=.protolint.yaml .
+          protolint_flags: -plugin ../../example/plugin_example .
           github_token: ${{ secrets.GITHUB_TOKEN }}
           fail_on_error: true
           level: error
