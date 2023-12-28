@@ -13,12 +13,13 @@ jobs:
         with:
           repository: bucketplace/ci
           path:  ci
-      - name: Print config file
+      - name: Print and Copy config file
         run: |
           cat ci/.github/workflows/.protolint.yaml
+          cp ci/.github/workflows/.protolint.yaml .protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -config_path=ci/.github/workflows/.protolint.yaml
+          protolint_flags: -config_path=.protolint.yaml .
           fail_on_error: true
           level: error
