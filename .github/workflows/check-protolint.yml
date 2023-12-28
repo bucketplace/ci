@@ -11,14 +11,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: bucketplace/ci/.github
-          path: .github
+          repository: bucketplace/ci
+          path:  ci
       - name: Print config file
         run: |
-          cat .github/workflows/.protolint.yaml
+          cat ci/.github/workflows/.protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -config_path=./.protolint.yaml .
+          protolint_flags: -config_path=ci/.github/workflows/.protolint.yaml .
           fail_on_error: true
           level: error
