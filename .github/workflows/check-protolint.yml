@@ -10,6 +10,12 @@ jobs:
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: bucketplace/ci/.github
+          path: .github
+      - name: Print config file
+        run: |
+          cat .github/workflows/.protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
