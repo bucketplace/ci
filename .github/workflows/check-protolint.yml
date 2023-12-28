@@ -6,25 +6,12 @@ on:
 jobs:
   protolint:
     name: protolint
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64, cache]
     permissions: write-all
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Check if .protolint.yaml exists
-        run: |
-          if [ -f $GITHUB_WORKSPACE/.github/workflows/.protolint.yaml ]; then
-            echo "File exists."
-          else
-            echo "File does not exist."
-            exit 1
-          fi
-      - name: Copy Protolint Config
-        working-directory: $GITHUB_WORKSPACE
-        run: cp target/.protolint.yaml .protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
-          protolint_flags: -config_path=.protolint.yaml .
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          protolint_flags: -config_path=.protolint.yaml .
           fail_on_error: true
           level: error
