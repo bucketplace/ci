@@ -58,7 +58,9 @@ jobs:
       - name: Install dependencies
         run: ${{ steps.pkg-manager.outputs.install-cmd }}
       - name: Build packages
-        run: NODE_ENV=production ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
+        run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
+        env:
+          NODE_ENV: production
       - name: Publish package
         uses: changesets/action@v1
         with:
