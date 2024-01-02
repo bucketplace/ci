@@ -18,13 +18,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: bucketplace/ci
-          path:  ci
+          path: ci
       - name: Print the config file
         run: |
           cat ci/.github/workflows/.protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -config_path=${{ inputs.lint-config }}
+          protolint_flags: -config_path=${{ inputs.lint-config }} .
           fail_on_error: true
           level: error
