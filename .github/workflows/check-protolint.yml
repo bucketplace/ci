@@ -16,14 +16,9 @@ jobs:
       - name: Print the config file
         run: |
           cat ci/.github/workflows/.protolint.yaml
-      - name: Save protolint config as Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: protolint-config
-          path: ci/.github/workflows/.protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -config_path=protolint-config .
+          protolint_flags: -config_path=.protolint-config.yaml .
           fail_on_error: true
           level: error
