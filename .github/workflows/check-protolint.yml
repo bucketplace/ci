@@ -17,12 +17,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Granting private modules access
-        env:
-          TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
-        if: env.TOKEN != null
-        run: |
-          git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
