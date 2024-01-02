@@ -15,10 +15,14 @@ jobs:
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: bucketplace/ci
-          path: ci
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Granting private modules access
+        env:
+          TOKEN: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+        if: env.TOKEN != null
+        run: |
+          git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
       - name: Print the config file
         run: |
           cat ci/.github/workflows/.protolint.yaml
