@@ -4,6 +4,7 @@ on:
   workflow_call:
     inputs:
       lint-config:
+        type: string
         description: "Proto lint config file path"
         required: false
         default: ".protolint.yaml"
