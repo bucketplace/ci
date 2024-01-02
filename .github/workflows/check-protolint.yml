@@ -2,6 +2,11 @@ name: "Check Protobuf Lint"
 
 on:
   workflow_call:
+    inputs:
+      lint-config:
+        description: "Proto lint config file path"
+        required: false
+        default: ".protolint.yaml"
 
 jobs:
   protolint:
@@ -19,6 +24,6 @@ jobs:
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -config_path=.protolint-config.yaml .
+          protolint_flags: -config_path=$${ inputs.lint-config} .
           fail_on_error: true
           level: error
