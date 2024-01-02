@@ -6,7 +6,7 @@ on:
 jobs:
   protolint:
     name: protolint
-    runs-on: [self-hosted, Linux, X64, cache]
+    runs-on: ubuntu-latest
     permissions: write-all
     steps:
       - uses: actions/checkout@v4
@@ -24,6 +24,6 @@ jobs:
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -config_path=ci/.github/workflows/.protolint.yaml .
+          protolint_flags: -config_path=protolint-config .
           fail_on_error: true
           level: error
