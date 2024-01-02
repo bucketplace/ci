@@ -23,9 +23,6 @@ jobs:
         if: env.TOKEN != null
         run: |
           git config --global url."https://bp-deployer:${TOKEN}@github.com/bucketplace/".insteadOf "https://github.com/bucketplace/"
-      - name: Print the config file
-        run: |
-          cat ci/.github/workflows/.protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
