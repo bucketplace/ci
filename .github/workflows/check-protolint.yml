@@ -13,10 +13,14 @@ jobs:
         with:
           repository: bucketplace/ci
           path:  ci
-      - name: Print and Copy config file
+      - name: Print the config file
         run: |
           cat ci/.github/workflows/.protolint.yaml
-          cp ci/.github/workflows/.protolint.yaml .protolint.yaml
+      - name: Save protolint config as Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: protolint-config
+          path: ci/.github/workflows/.protolint.yaml
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
