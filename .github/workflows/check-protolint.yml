@@ -17,9 +17,16 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Check protolint list
+        uses: yoheimuta/action-protolint@v1.2.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          protolint_flags: list -plugin=../../example/plugin_example .
+          fail_on_error: true
+          level: error
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -plugin=../../example/plugin_example .
+          protolint_flags: -plugin=../../example/plugin_example . -config_path=${{ inputs.lint-config }} .
           fail_on_error: true
           level: error
