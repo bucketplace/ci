@@ -29,7 +29,6 @@ on:
         required: true
 
 env:
-  NODE_ENV: production
   CI: true
 
 jobs:
@@ -60,6 +59,8 @@ jobs:
         run: ${{ steps.pkg-manager.outputs.install-cmd }}
       - name: Build packages
         run: ${{ steps.pkg-manager.outputs.run-cmd }} ${{ inputs.build-command }}
+        env:
+          NODE_ENV: production
       - name: Publish package
         uses: changesets/action@v1
         with:
