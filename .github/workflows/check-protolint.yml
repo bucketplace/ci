@@ -3,6 +3,11 @@ name: "Check Protobuf Lint"
 on:
   workflow_call:
     inputs:
+      plugin:
+        type: string
+        description: "Proto lint plugin path"
+        required: false
+        default: "../../example/plugin_example"
       lint-config:
         type: string
         description: "Proto lint config file path"
@@ -17,16 +22,18 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Cat Print plugin
+        run: cat ${{ inputs.plugin }}
       - name: Check protolint list
         uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: list -plugin=../../example/plugin_example .
+          protolint_flags: list -plugin=${{ inputs.plugin }} .
           fail_on_error: true
           level: error
       - uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -plugin=../../example/plugin_example . -config_path=${{ inputs.lint-config }} .
+          protolint_flags: -plugin=${{ inputs.plugin }} . -config_path=${{ inputs.lint-config }} .
           fail_on_error: true
           level: error
