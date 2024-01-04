@@ -22,16 +22,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Check protolint list
+      - name: Check protolint lint w/ plugin
         uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -plugin=${{ inputs.plugin }} .
+          protolint_flags: -plugin=${{ inputs.plugin }} *
           fail_on_error: true
           level: error
-      - uses: yoheimuta/action-protolint@v1.2.0
+      - name: Check protolint lint w/ config
+        uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -plugin=${{ inputs.plugin }} . -config_path=${{ inputs.lint-config }} .
+          protolint_flags: -config_path=${{ inputs.lint-config }} *
+          fail_on_error: true
+          level: error
+      - name: Check protolint lint w/ plugi and config
+        uses: yoheimuta/action-protolint@v1.2.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          protolint_flags: -plugin=${{ inputs.plugin }} -config_path=${{ inputs.lint-config }} .
           fail_on_error: true
           level: error
