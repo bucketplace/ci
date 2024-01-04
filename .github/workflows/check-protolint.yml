@@ -22,11 +22,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.18
+      - name: Create plugin
+        run: go build -o myPlugin example/main.go
       - name: Check protolint lint w/ plugin
         uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: -plugin=${{ inputs.plugin }} *
+          protolint_flags: -plugin=./myPlugin *
           fail_on_error: true
           level: error
       - name: Check protolint lint w/ config
@@ -36,7 +42,7 @@ jobs:
           protolint_flags: -config_path=${{ inputs.lint-config }} *
           fail_on_error: true
           level: error
-      - name: Check protolint lint w/ plugi and config
+      - name: Check protolint lint w/ plugin and config
         uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
