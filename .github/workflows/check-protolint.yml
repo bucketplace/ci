@@ -22,13 +22,11 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - name: Cat Print plugin
-        run: cat ${{ inputs.plugin }}
       - name: Check protolint list
         uses: yoheimuta/action-protolint@v1.2.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          protolint_flags: list -plugin=${{ inputs.plugin }} .
+          protolint_flags: -plugin=${{ inputs.plugin }} .
           fail_on_error: true
           level: error
       - uses: yoheimuta/action-protolint@v1.2.0
