@@ -26,6 +26,8 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: 1.18
+      - name: Initialize Go modules
+        run: go mod init
       - name: Create plugin
         run: go build -o myPlugin example/main.go
       - name: Check protolint lint w/ plugin
