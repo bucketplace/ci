@@ -3,6 +3,11 @@ name: "Check Protobuf Lint"
 on:
   workflow_call:
     inputs:
+      app-path:
+        type: string
+        description: "앱 기준 디렉토리"
+        required: false
+        default: "."
       plugin:
         type: string
         description: "Proto lint plugin path"
@@ -28,9 +33,9 @@ jobs:
           go-version: 1.18
       - name: Initialize Go modules
         run: |
-          go mod init && \
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
-          go env -w GONOSUMDB=go.dailyhou.se
+          go env -w GONOSUMDB=go.dailyhou.se && \
+          export PATH=$(go env GOPATH)/bin:$PATH && cd ${{ inputs.app-path }}
       - name: Create plugin
         run: go build -o myPlugin example/main.go
       - name: Check protolint lint w/ plugin
