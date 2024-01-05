@@ -35,7 +35,8 @@ jobs:
         run: |
           go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
           go env -w GONOSUMDB=go.dailyhou.se && \
-          export PATH=$(go env GOPATH)/bin:$PATH && cd ${{ inputs.app-path }}
+          export PATH=$(go env GOPATH)/bin:$PATH && cd ${{ inputs.app-path }} && \
+          go install github.com/yoheimuta/protolint@latest
       - name: Create plugin
         run: go build -o myPlugin example/main.go
       - name: Check protolint lint w/ plugin
