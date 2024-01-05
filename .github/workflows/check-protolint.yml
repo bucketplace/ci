@@ -27,7 +27,10 @@ jobs:
         with:
           go-version: 1.18
       - name: Initialize Go modules
-        run: go mod init
+        run: |
+          go mod init && \
+          go env -w GOPROXY=https://go.co-workerhou.se,https://proxy.golang.org,direct && \
+          go env -w GONOSUMDB=go.dailyhou.se
       - name: Create plugin
         run: go build -o myPlugin example/main.go
       - name: Check protolint lint w/ plugin
