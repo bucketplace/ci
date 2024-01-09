@@ -1,0 +1,26 @@
+name: "Check Protobuf Lint"
+
+on:
+  workflow_call:
+    inputs:
+      lint-config:
+        type: string
+        description: "Proto lint config file path"
+        required: false
+        default: ".protolint.yaml"
+
+jobs:
+  protolint:
+    name: protolint
+    runs-on: [self-hosted, Linux, X64, cache]
+    permissions: write-all
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check protolint lint w/ config
+        uses: yoheimuta/action-protolint@v1.2.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          protolint_flags: -config_path=${{ inputs.lint-config }} *
+          fail_on_error: true
+          level: error
