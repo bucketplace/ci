@@ -1,0 +1,136 @@
+name: 🚀 Mortar Build And Push Action
+
+on:
+  workflow_call:
+    inputs:
+      application:
+        required: true
+        type: string
+      profile:
+        required: true
+        type: string
+      mortar-config:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+      account-type:
+        type: string
+        required: true
+      skip-update-version:
+        type: boolean
+        required: false
+        default: false
+    secrets:
+      DEV_AWS_ACCESS_KEY_ID:
+        required: true
+      DEV_AWS_SECRET_ACCESS_KEY:
+        required: true
+      DEV_AWS_ACCOUNT_ID:
+        required: true
+      DATA_AWS_ACCESS_KEY_ID:
+        required: true
+      DATA_AWS_SECRET_ACCESS_KEY:
+        required: true
+      DATA_AWS_ACCOUNT_ID:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+      NEXUS_DEPLOY_USERPASS:
+        required: true
+      OPSMONSTER_AUTH_TOKEN_V2:
+        required: true
+      OPSMONSTER_BASE_URL_V2:
+        required: true
+    outputs:
+      version:
+        description: "The version of the application that was built and pushed"
+        value: ${{ jobs.build-and-push.outputs.version }}
+
+jobs:
+  build-and-push:
+    name: "Build: ${{ inputs.application }}"
+    runs-on: [ self-hosted, Linux, X64, mortar, v2 ]
+    env:
+      DEBUG: true
+      APP_PROFILE: ${{ inputs.profile }}
+    outputs:
+      version: ${{ steps.mortar-deploy.outputs.app-version }}
+    steps:
+      - name: Resolve AWS environment
+        id: aws
+        run: |
+          if [ "${{ inputs.account-type }}" == "DATA" ] 
+          then
+            echo "::add-mask::${{ secrets.DATA_AWS_ACCESS_KEY_ID }}"
+            echo "access_key_id=${{ secrets.DATA_AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+            echo "::add-mask::${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}"
+            echo "secret_access_key=${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
+            echo "::add-mask::${{ secrets.DATA_AWS_ACCOUNT_ID }}"
+            echo "account_id=${{ secrets.DATA_AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.account-type }}" == "DEV" ] 
+          then
+            echo "::add-mask::${{ secrets.DEV_AWS_ACCESS_KEY_ID }}"
+            echo "access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+            echo "::add-mask::${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}"
+            echo "secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
+            echo "::add-mask::${{ secrets.DEV_AWS_ACCOUNT_ID }}"
+            echo "account_id=${{ secrets.DEV_AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::add-mask::${{ secrets.AWS_ACCESS_KEY_ID }}"
+            echo "access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+            echo "::add-mask::${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+            echo "secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
+            echo "::add-mask::${{ secrets.AWS_ACCOUNT_ID }}"
+            echo "account_id=${{ secrets.AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
+          fi
+        shell: bash
+      - name: Check out code
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+      - name: Change mortar version
+        uses: mikefarah/yq@master
+        with:
+          cmd: >
+            yq -i
+            '.version = "${{ inputs.version }}"'
+            ${{ inputs.mortar-config }}
+      - name: Mortar Deploy
+        id: mortar-deploy
+        uses: bucketplace/mortar-deploy-action@v1
+        with:
+          aws-access-key-id: ${{ steps.aws.outputs.access_key_id }}
+          aws-secret-access-key: ${{ steps.aws.outputs.secret_access_key }}
+          aws-region: ap-northeast-2
+          nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
+          prod: ${{ inputs.profile == 'prod' }}
+          config: ${{ inputs.mortar-config }}
+          create-ecr-repo: true
+      - name: Report Summary
+        run: |
+          cat > "$GITHUB_STEP_SUMMARY" << EOF
+          ### Deployment Information
+          배포가 실행되었습니다. :rocket:
+          | Key | Value |
+          | --- | --- |
+          | Application | ${{ inputs.application }} |
+          | Environment | ${{ env.APP_PROFILE }} |
+          | Application Version | ${{ inputs.version }} |
+          | Deployed By | @${{ github.actor }} |
+          EOF
+      - name: Push commit and tag
+        if: inputs.profile == 'prod' && inputs.skip-update-version == false
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "[skip actions] Automatically update mortar.yaml version of ${{ inputs.application }} to v${{ inputs.version }}"
+          tagging_message: "${{ inputs.application }}-v${{ inputs.version }}"
+          branch: main
+          commit_user_name: bp-deployer
+          commit_user_email: bp-deployer@users.noreply.github.com
+          commit_author: bp-deployer <bp-deployer@users.noreply.github.com>
