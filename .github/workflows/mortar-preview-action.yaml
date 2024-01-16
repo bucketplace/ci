@@ -1,4 +1,4 @@
-name: Mortar Preview Action
+name: 🚀 Mortar Preview Action
 
 on:
   workflow_call:
@@ -30,6 +30,11 @@ on:
         description: "Mortar 설정 파일 경로"
         type: string
         required: true
+      mortar-version:
+        type: string
+        description: "mortar 버전 (JVM 17이상시 v2, 이하시 v1)"
+        required: false
+        default: "v2"
 
 jobs:
   check-comment:
@@ -48,31 +53,23 @@ jobs:
 
   get-updated-version:
     name: Get Updated Version
-    runs-on: [ self-hosted, Linux, X64, mortar, v2 ]
+    runs-on: [ self-hosted, Linux, X64, mortar, "${{ inputs.mortar-version }}" ]
     env:
       DEBUG: true
     outputs:
-      updated-version: ${{ steps.generate-next-version.outputs.updated-version }}
+      updated-version: ${{ steps.get-tag.outputs.next-version }}
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - id: get-current-version
-        uses: mikefarah/yq@master
+      - name: Get Tags
+        id: get-tag
+        uses: bucketplace/ci/.github/actions/multimodule-changelog@latest
         with:
-          cmd: yq '.version' ${{ inputs.mortar-config }}
-      - id: version
-        uses: madhead/semver-utils@latest
-        with:
-          version: ${{ steps.get-current-version.outputs.result }}
-      - name: Generate Next Version
-        id: generate-next-version
-        run: |
-          GEN_VERSION="${{ steps.version.outputs.inc-patch }}"
-          echo "updated-version=${GEN_VERSION}" >> $GITHUB_OUTPUT
-        shell: bash
+          module: '${{ inputs.application }}'
+          bump: '${{ inputs.update-type }}'
 
   build-and-push:
-    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    runs-on: [self-hosted, Linux, X64, mortar, v2]
     needs: [check-comment, get-updated-version]
     if: needs.check-comment.outputs.triggered == 'true'
     env:
@@ -87,32 +84,42 @@ jobs:
           if [ "${{ inputs.account-type }}" == "DATA" ] 
           then
             echo "::add-mask::${{ secrets.DATA_AWS_ACCESS_KEY_ID }}"
-            echo "access_key_id=${{ secrets.DATA_AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "access_key_id=${{ secrets.DATA_AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
             echo "::add-mask::${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}"
-            echo "secret_access_key=${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "secret_access_key=${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
             echo "::add-mask::${{ secrets.DATA_AWS_ACCOUNT_ID }}"
-            echo "account_id=${{ secrets.DATA_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+            echo "account_id=${{ secrets.DATA_AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
           elif [ "${{ inputs.account-type }}" == "DEV" ] 
           then
             echo "::add-mask::${{ secrets.DEV_AWS_ACCESS_KEY_ID }}"
-            echo "access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "access_key_id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
             echo "::add-mask::${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}"
-            echo "secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "secret_access_key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
             echo "::add-mask::${{ secrets.DEV_AWS_ACCOUNT_ID }}"
-            echo "account_id=${{ secrets.DEV_AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+            echo "account_id=${{ secrets.DEV_AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
           else
             echo "::add-mask::${{ secrets.AWS_ACCESS_KEY_ID }}"
-            echo "access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> $GITHUB_OUTPUT
+            echo "access_key_id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
             echo "::add-mask::${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-            echo "secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> $GITHUB_OUTPUT
+            echo "secret_access_key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
             echo "::add-mask::${{ secrets.AWS_ACCOUNT_ID }}"
-            echo "account_id=${{ secrets.AWS_ACCOUNT_ID }}" >> $GITHUB_OUTPUT
+            echo "account_id=${{ secrets.AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
           fi
         shell: bash
+      - name: get pull request ref
+        id: get_pull_request_ref
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/:repository/pulls/:issue_id
+          repository: ${{ github.repository }}
+          issue_id: ${{ github.event.issue.number }}
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
       - name: Check out code
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+          ref: ${{ fromJson(steps.get_pull_request_ref.outputs.data).head.ref }}
       - name: Change mortar version
         uses: mikefarah/yq@master
         with:
@@ -133,14 +140,14 @@ jobs:
           create-ecr-repo: true
       - name: Report Summary
         run: |
-          cat > $GITHUB_STEP_SUMMARY << EOF
+          cat > "$GITHUB_STEP_SUMMARY" << EOF
           ### Deployment Information
           배포가 실행되었습니다. :rocket:
           | Key | Value |
           | --- | --- |
           | Application | ${{ inputs.application }} |
           | Environment | ${{ env.APP_PROFILE }} |
-          | Application Version | ${{ inputs.version }} |
+          | Application Version | ${{ needs.get-updated-version.outputs.updated-version }} |
           | Deployed By | @${{ github.actor }} |
           EOF
 
@@ -180,7 +187,7 @@ jobs:
           release-name-length: 40
           pr-title: ${{ needs.get-metadata.outputs.pr_title }}
           pr-url: ${{ needs.get-metadata.outputs.pr_url }}
-          pr-assignee: ${{ needs.bget-metadata.outputs.pr_assignee }}
+          pr-assignee: ${{ needs.get-metadata.outputs.pr_assignee }}
           profile: ${{ inputs.profile }}
           image-tag: ${{ needs.build-and-push.outputs.version }}
           base-domain: ${{ inputs.base-domain }}
