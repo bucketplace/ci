@@ -66,7 +66,7 @@ jobs:
         uses: bucketplace/ci/.github/actions/multimodule-changelog@latest
         with:
           module: '${{ inputs.application }}'
-          bump: '${{ inputs.update-type }}'
+          bump: 'major'
 
   build-and-push:
     runs-on: [self-hosted, Linux, X64, mortar, v2]
