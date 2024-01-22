@@ -1,0 +1,120 @@
+name: 🚀 Mortar Deploy Action
+
+on:
+  workflow_call:
+    inputs:
+      application:
+        description: "배포할 애플리케이션"
+        type: string
+        required: true
+      profile:
+        description: "배포 환경"
+        type: string
+        required: true
+      mortar-config:
+        description: "Mortar 설정 파일 경로"
+        type: string
+        required: true
+      update-type:
+        description: "업데이트 타입"
+        type: string
+        required: true
+      account-type:
+        type: string
+        required: true
+      skip-update-version:
+        type: boolean
+        required: false
+        default: false
+      mortar-version:
+        type: string
+        description: "mortar 버전 (JVM 17이상시 v2, 이하시 v1)"
+        required: false
+        default: "v2"
+    secrets:
+      DEV_AWS_ACCESS_KEY_ID:
+        required: true
+      DEV_AWS_SECRET_ACCESS_KEY:
+        required: true
+      DEV_AWS_ACCOUNT_ID:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+      DATA_AWS_ACCESS_KEY_ID:
+        required: true
+      DATA_AWS_SECRET_ACCESS_KEY:
+        required: true
+      DATA_AWS_ACCOUNT_ID:
+        required: true
+      NEXUS_DEPLOY_USERPASS:
+        required: true
+      OPSMONSTER_AUTH_TOKEN_V2:
+        required: true
+      OPSMONSTER_BASE_URL_V2:
+        required: true
+
+jobs:
+  get-updated-version:
+    name: Get Updated Version
+    runs-on: [ self-hosted, Linux, X64, mortar, "${{ inputs.mortar-version }}" ]
+    env:
+      DEBUG: true
+    outputs:
+      updated-version: ${{ steps.get-tag.outputs.next-version }}
+      updated-tag: ${{ steps.get-tag.outputs.next-tag }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Get Tags
+        id: get-tag
+        uses: bucketplace/ci/.github/actions/multimodule-changelog@latest
+        with:
+          module: '${{ inputs.application }}'
+          bump: '${{ inputs.update-type }}'
+
+  mortar-build-and-push-action:
+    name: "Build and Push: ${{ inputs.application }}"
+    needs: [ get-updated-version ]
+    uses: ./.github/workflows/mortar-build-and-push-action.yaml
+    with:
+      application: ${{ inputs.application }}
+      profile: ${{ inputs.profile }}
+      mortar-config: ${{ inputs.mortar-config }}
+      version: ${{ needs.get-updated-version.outputs.updated-version }}
+      account-type: ${{ inputs.account-type }}
+      skip-update-version: ${{ inputs.skip-update-version }}
+    secrets: inherit
+
+  trigger-cd:
+    name: "Trigger CD: ${{ inputs.application }}"
+    if: inputs.skip-update-version == false
+    needs: [ mortar-build-and-push-action ]
+    runs-on: [ self-hosted, Linux, X64, no-cache ]
+    steps:
+      - name: CD trigger
+        uses: bucketplace/cd-trigger-action@v2.1
+        env:
+          AUTH_TOKEN: ${{ secrets.OPSMONSTER_AUTH_TOKEN_V2 }}
+          BASE_URL: ${{ secrets.OPSMONSTER_BASE_URL_V2 }}
+        with:
+          application: ${{ inputs.application }}
+          profile: ${{ inputs.profile }}
+          image-tag: ${{ needs.mortar-build-and-push-action.outputs.version }}
+          version: ${{ needs.mortar-build-and-push-action.outputs.version }}
+
+  release-tag:
+    name: "Relase Tag: ${{ inputs.application }}"
+    if: inputs.profile == 'prod' && inputs.skip-update-version == false
+    needs: [ mortar-build-and-push-action, get-updated-version ]
+    runs-on: [ self-hosted, Linux, X64, no-cache ]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: ncipollo/release-action@v1
+        with:
+          tag: "${{ needs.get-updated-version.outputs.updated-tag }}"
+          generateReleaseNotes: "true"
+          makeLatest: "latest"
