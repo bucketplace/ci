@@ -11,9 +11,6 @@ on:
         description: "배포 환경"
         type: string
         required: true
-      ecr-repository:
-        type: string
-        required: true
       base-domain:
         type: string
         required: true
