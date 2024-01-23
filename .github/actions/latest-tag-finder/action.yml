@@ -50,7 +50,7 @@ runs:
       id: current-tag  # The step ID to refer to later.
       run: |
         cd __temp__99
-        LATEST_TAG=$(git tag -l "${{ inputs.prefix }}*" --merged | grep '^${{ inputs.prefix }}[0-9]' |sort --version-sort -r | head -n 1 | tr -d '[:space:]')
+        LATEST_TAG=$(git tag -l "${{ inputs.prefix }}*" --merged | grep -E '^${{ inputs.prefix }}[0-9]+\.[0-9]+\.[0-9]+&' |sort --version-sort -r | head -n 1 | tr -d '[:space:]')
         echo "version=${LATEST_TAG#${{ inputs.prefix }}}" >> $GITHUB_OUTPUT
         echo "tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
         rm -rf __temp__99
