@@ -97,7 +97,7 @@ jobs:
       - uses: chrisdickinson/setup-yq@latest
       - name: Change mortar version
         run: |
-          yq -i '.version = "${{ inputs.version }}"' ${{ inputs.mortar-config }}
+          yq '.version = "${{ inputs.version }}"' ${{ inputs.mortar-config }} > temp.yaml && mv temp.yaml ${{ inputs.mortar-config }}
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1
