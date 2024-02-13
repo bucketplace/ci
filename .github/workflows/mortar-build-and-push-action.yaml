@@ -98,8 +98,8 @@ jobs:
       - name: Change mortar version
         run: |
           yq w --inplace
-          '.version = "${{ inputs.version }}"'
           ${{ inputs.mortar-config }}
+          '.version = "${{ inputs.version }}"'
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1
