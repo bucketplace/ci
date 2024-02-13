@@ -118,7 +118,7 @@ jobs:
           token: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
           ref: ${{ fromJson(steps.get_pull_request_ref.outputs.data).head.ref }}
       - name: Change mortar version
-        uses: mikefarah/yq@master
+        uses: chrisdickinson/setup-yq@latest
         with:
           cmd: >
             yq -i
