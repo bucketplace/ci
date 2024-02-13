@@ -99,7 +99,7 @@ jobs:
         run: |
           yq w --inplace
           ${{ inputs.mortar-config }}
-          '.version = "${{ inputs.version }}"'
+          .version "${{ inputs.version }}"
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1
