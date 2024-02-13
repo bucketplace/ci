@@ -117,13 +117,10 @@ jobs:
         with:
           token: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
           ref: ${{ fromJson(steps.get_pull_request_ref.outputs.data).head.ref }}
+      - uses: chrisdickinson/setup-yq@latest
       - name: Change mortar version
-        uses: mikefarah/yq@master
-        with:
-          cmd: >
-            yq -i
-            '.version = "${{ needs.get-updated-version.outputs.updated-version }}"'
-            ${{ inputs.mortar-config }}
+        run: |
+          yq w -i ${{ inputs.mortar-config }} version ${{ inputs.version }}
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1

@@ -94,13 +94,10 @@ jobs:
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
+      - uses: chrisdickinson/setup-yq@latest
       - name: Change mortar version
-        uses: mikefarah/yq@master
-        with:
-          cmd: >
-            yq -i
-            '.version = "${{ inputs.version }}"'
-            ${{ inputs.mortar-config }}
+        run: |
+          yq w -i ${{ inputs.mortar-config }} version ${{ inputs.version }}
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/mortar-deploy-action@v1
