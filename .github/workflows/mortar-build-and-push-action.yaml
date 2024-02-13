@@ -95,7 +95,7 @@ jobs:
         with:
           token: ${{ secrets.BP_DEPLOYER_GITHUB_TOKEN }}
       - name: Change mortar version
-        uses: chrisdickinson/setup-yq@latest
+        uses: mikefarah/yq@master
         with:
           cmd: >
             yq -i
