@@ -97,7 +97,7 @@ jobs:
       - uses: chrisdickinson/setup-yq@latest
       - name: Change mortar version
         run: |
-          yq w -i
+          yq w --inplace
           '.version = "${{ inputs.version }}"'
           ${{ inputs.mortar-config }}
       - name: Mortar Deploy
