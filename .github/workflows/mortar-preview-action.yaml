@@ -32,6 +32,11 @@ on:
         description: "mortar 버전 (JVM 17이상시 v2, 이하시 v1)"
         required: false
         default: "v2"
+      ingress-host-key:
+        type: string
+        description: "ingress host key"
+        required: false
+        default: "ingress.hosts[0].host"
 
 jobs:
   check-comment:
@@ -183,6 +188,7 @@ jobs:
           pr-url: ${{ needs.get-metadata.outputs.pr_url }}
           pr-assignee: ${{ needs.get-metadata.outputs.pr_assignee }}
           profile: ${{ inputs.profile }}
+          ingress-host-key: ${{ inputs.ingress-host-key }}
           image-tag: ${{ needs.build-and-push.outputs.version }}
           base-domain: ${{ inputs.base-domain }}
           destination: ${{ inputs.destination }}
