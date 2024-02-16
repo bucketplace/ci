@@ -34,7 +34,7 @@ on:
         default: "v2"
       ingress-host-key:
         type: string
-        description: "ingress host key"
+        description: "ingress host key (국내에서는 ingress.hosts[0].host, 글로벌에서는 httpProxy.host)"
         required: false
         default: "ingress.hosts[0].host"
 
