@@ -8,9 +8,6 @@ inputs:
   aws-secret-access-key:
     description: "AWS Secret Access Key for ECR"
     required: true
-  nexus-user:
-    description: "Nexus User ID:PW that has permission to publish packages to maven and npm repositories"
-    required: true
   aws-region:
     description: "AWS Region for ECR"
     required: false
@@ -27,6 +24,10 @@ inputs:
     description: "runs the deployment without actual publication"
     required: false
     default: "false"
+  gradle-opts:
+    description: "if it set, it overwrites recommend gradle opts (-Xmx128m -Dorg.gradle.jvmargs='-Xmx1g')"
+    required: false
+    default: "-Xmx128m -Dorg.gradle.jvmargs='-Xmx1g'"
   go-repo-s3-aws-access-id:
     description: "access ID of AWS credentials for golang repository bucket, if necessary"
     required: false
@@ -35,16 +36,27 @@ inputs:
     description: "secret Key of AWS credentials for golang repository bucket, if necessary"
     required: false
     default: ""
+  nexus-user:
+    description: "Nexus User ID:PW that has permission to publish packages to maven and npm repositories"
+    required: true
   nexus-url:
     description: "Nexus URL where all the packages are published"
     required: false
     default: "https://nexus.co-workerhou.se"
+  ops-monster-token:
+    description: "Mortar OpsMonster Token"
+    required: false
+    default: ""
   override-version:
     description: "if it set, it overrides app version on the mortar.yaml file"
     required: false
     default: ""
   prod:
     description: "is production or not"
+    required: false
+    default: "false"
+  stub-only:
+    description: "deploy only a grpc stubs, not the packages or docker"
     required: false
     default: "false"
 
@@ -76,25 +88,27 @@ runs:
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+    - uses: chrisdickinson/setup-yq@latest
     - name: Extract App name
       id: extract-app-name
-      uses: mikefarah/yq@master
-      with:
-        cmd: yq '.name' ${{inputs.config}}
+      run: echo result="$(yq '.name' ${{inputs.config}})" >> $GITHUB_OUTPUT
+      shell: bash
     - name: Load Build Cache
       id: load-build-cache
-      uses: bucketplace/ci/.github/actions/load-build-cache@latest
+      uses: ./.github/actions/load-build-cache
       with:
         app-name: ${{ steps.extract-app-name.outputs.result }}
     - name: Mortar Deployment
       id: mortar-deploy
       env:
+        GRADLE_OPTS: ${{ inputs.gradle-opts }}
         DEBUG: "true"
         NO_TTY: "1"
       run: |
         mortar deploy -y \
         --nexus-user="${{ inputs.nexus-user }}" \
         --nexus-url="${{ inputs.nexus-url }}" \
+        --ops-monster-token="${{ inputs.ops-monster-token }}" \
         --prod=${{ inputs.prod }} \
         --config="${{ inputs.config }}" \
         --ecr-repository-region=${{ inputs.aws-region }} \
@@ -104,13 +118,11 @@ runs:
         --go-repo-s3-aws-access-id="${{ inputs.go-repo-s3-aws-access-id}}" \
         --go-repo-s3-aws-secret-key="${{ inputs.go-repo-s3-aws-secret-key}}" \
         --override-version="${{ inputs.override-version }}" \
+        --stub-only=${{ inputs.stub-only }} \
         --github
       shell: bash
     - name: Store Build Cache
       id: store-build-cache
-      uses: bucketplace/ci/.github/actions/store-build-cache@latest
+      uses: ./.github/actions/store-build-cache
       with:
         app-name: ${{ steps.extract-app-name.outputs.result }}
-
-
-

@@ -50,7 +50,15 @@ on:
         required: true
       DATA_AWS_ACCOUNT_ID:
         required: true
+      MGMT_AWS_ACCESS_KEY_ID:
+        required: true
+      MGMT_AWS_SECRET_ACCESS_KEY:
+        required: true
+      MGMT_AWS_ACCOUNT_ID:
+        required: true
       NEXUS_DEPLOY_USERPASS:
+        required: true
+      MORTAR_OPSMONSTER_TOKEN:
         required: true
       OPSMONSTER_AUTH_TOKEN_V2:
         required: true
@@ -71,7 +79,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Get Tags
         id: get-tag
-        uses: bucketplace/ci/.github/actions/multimodule-changelog@latest
+        uses: ./.github/actions/multimodule-changelog
         with:
           module: '${{ inputs.application }}'
           bump: '${{ inputs.update-type }}'

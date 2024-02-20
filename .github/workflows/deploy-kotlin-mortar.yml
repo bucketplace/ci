@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Get Tag
         id: get-tag
-        uses: bucketplace/ci/.github/actions/release-tag-finder@latest
+        uses: ./.github/actions/release-tag-finder
         with:
           prefix: "${{ inputs.app-name }}-v"
       - name: Mortar Deploy
@@ -151,7 +151,7 @@ jobs:
           image-tag: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
           version: ${{  needs.build-and-push-nonprod.outputs.image-tag  }}
       - name: Cancel previous workflows run
-        uses: bucketplace/ci/.github/actions/cancel-previous-workflows@latest
+        uses: ./.github/actions/cancel-previous-workflows
         with:
           app-name: ${{ inputs.app-name }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -187,7 +187,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Get Tag
         id: get-tag
-        uses: bucketplace/ci/.github/actions/release-tag-finder@latest
+        uses: ./.github/actions/release-tag-finder
         with:
           prefix: "${{ inputs.app-name }}-v"
       - name: Mortar Deploy
