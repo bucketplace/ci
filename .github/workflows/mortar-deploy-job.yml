@@ -139,7 +139,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Mortar Deploy
         id: mortar-deploy
-        uses: ./.github/actions/mortar-deploy-action
+        uses: bucketplace/ci/.github/actions/mortar-deploy-action
         with:
           aws-access-key-id: ${{ steps.aws-resolve.outputs.access-key-id }}
           aws-secret-access-key: ${{ steps.aws-resolve.outputs.secret-access-key }}
