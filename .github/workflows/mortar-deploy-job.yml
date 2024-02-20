@@ -104,7 +104,7 @@ on:
 jobs:
   mortar-deploy:
     name: Mortar Deploy
-    runs-on: [self-hosted, Linux, X64, mortar, "${{ inputs.mortar-version }}" ]
+    runs-on: [self-hosted, Linux, X64, mortar ]
     outputs:
       app-version: ${{ steps.mortar-deploy.outputs.app-version }}
       app-name: ${{ steps.mortar-deploy.outputs.app-name }}
