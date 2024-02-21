@@ -1,46 +1,57 @@
 name: Mortar Deploy Action
 on:
   workflow_call:
-    secrets:
-      AWS_ACCESS_KEY_ID:
-        required: true
-      AWS_SECRET_ACCESS_KEY:
-        required: true
-      NEXUS_DEPLOY_USERPASS:
-        required: true
-      GO_REPO_S3_AWS_ACCESS_ID:
-        required: false
-      GO_REPO_S3_AWS_SECRET_KEY:
-        required: false
     inputs:
+      account-type:
+        type: string
+        description: "AWS account type (DEV, DATA, MGMT otherwise uses default AWS account)"
+        default: ""
+        required: false
       aws-region:
         type: string
         description: "AWS Region for ECR"
         default: ap-northeast-2
-      nexus-url:
-        type: string
-        description: "Nexus URL where all the packages are published"
-        default: "https://nexus.co-workerhou.se"
+        required: false
       config:
         type: string
         description: "path of mortar config"
         default: "./mortar.yaml"
-      prod:
+        required: false
+      create-ecr-repo:
         type: string
-        description: "is production or not"
-        default: "false"
+        description: "creates ECR repository if it is not existed"
+        default: "true"
+        required: false
       dry-run:
         type: string
         description: "runs the deployment without actual publication"
         default: "false"
-      create-ecr-repo:
+        required: false
+      mortar-version:
         type: string
-        description: "creates ECR repository if it is not existed"
-        default: "false"
+        description: "version of mortar"
+        default: "v2"
+        required: false
+      nexus-url:
+        type: string
+        description: "Nexus URL where all the packages are published"
+        default: "https://nexus.co-workerhou.se"
+        required: false
       override-version:
         type: string
         description: "if it set, it overrides app version on the mortar.yaml file"
         default: ""
+        required: false
+      prod:
+        type: string
+        description: "is production or not"
+        default: "false"
+        required: false
+      stub-only:
+        type: string
+        description: "deploy only a grpc stubs, not the packages or docker"
+        default: "false"
+        required: false
     outputs:
       app-version:
         description: "version of deployed package and docker image(tag)"
@@ -54,32 +65,105 @@ on:
       owner:
         description: "owner team of deployed package from mortar config"
         value: ${{ jobs.mortar-deploy.outputs.owner }}
-
+      repo-name:
+        description: "repository name where the image has deployed"
+        value: ${{ jobs.mortar-deploy.outputs.repo-name }}
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      AWS_ACCOUNT_ID:
+        required: true
+      DATA_AWS_ACCESS_KEY_ID:
+        required: true
+      DATA_AWS_SECRET_ACCESS_KEY:
+        required: true
+      DATA_AWS_ACCOUNT_ID:
+        required: true
+      DEV_AWS_ACCESS_KEY_ID:
+        required: true
+      DEV_AWS_SECRET_ACCESS_KEY:
+        required: true
+      DEV_AWS_ACCOUNT_ID:
+        required: true
+      MGMT_AWS_ACCESS_KEY_ID:
+        required: true
+      MGMT_AWS_SECRET_ACCESS_KEY:
+        required: true
+      MGMT_AWS_ACCOUNT_ID:
+        required: true
+      MORTAR_OPSMONSTER_TOKEN:
+        required: true
+      NEXUS_DEPLOY_USERPASS:
+        required: true
+      OPSMONSTER_AUTH_TOKEN_V2:
+        required: true
+      OPSMONSTER_BASE_URL_V2:
+        required: true
 jobs:
   mortar-deploy:
     name: Mortar Deploy
-    runs-on: [self-hosted, Linux, X64, mortar-runner]
+    runs-on: [self-hosted, Linux, X64, mortar, "${{ inputs.mortar-version }}" ]
     outputs:
       app-version: ${{ steps.mortar-deploy.outputs.app-version }}
       app-name: ${{ steps.mortar-deploy.outputs.app-name }}
       namespace: ${{ steps.mortar-deploy.outputs.namespace }}
       owner: ${{ steps.mortar-deploy.outputs.owner }}
+      repo-name: ${{ steps.mortar-deploy.outputs.repo-name }}
     steps:
+      - name: Resolve AWS environment
+        id: aws-resolve
+        run: |
+          if [ "${{ inputs.account-type }}" == "DATA" ] 
+          then
+          echo "::add-mask::${{ secrets.DATA_AWS_ACCESS_KEY_ID }}"
+          echo "access-key-id=${{ secrets.DATA_AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}"
+          echo "secret-access-key=${{ secrets.DATA_AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.DATA_AWS_ACCOUNT_ID }}"
+            echo "account-id=${{ secrets.DATA_AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.account-type }}" == "DEV" ] 
+          then
+          echo "::add-mask::${{ secrets.DEV_AWS_ACCESS_KEY_ID }}"
+          echo "access-key-id=${{ secrets.DEV_AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}"
+          echo "secret-access-key=${{ secrets.DEV_AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.DEV_AWS_ACCOUNT_ID }}"
+            echo "account-id=${{ secrets.DEV_AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ inputs.account-type }}" == "MGMT" ] 
+          then
+          echo "::add-mask::${{ secrets.MGMT_AWS_ACCESS_KEY_ID }}"
+          echo "access-key-id=${{ secrets.MGMT_AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.MGMT_AWS_SECRET_ACCESS_KEY }}"
+          echo "secret-access-key=${{ secrets.MGMT_AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.MGMT_AWS_ACCOUNT_ID }}"
+            echo "account-id=${{ secrets.MGMT_AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
+          else
+          echo "::add-mask::${{ secrets.AWS_ACCESS_KEY_ID }}"
+          echo "access_key-id=${{ secrets.AWS_ACCESS_KEY_ID }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          echo "secret-access-key=${{ secrets.AWS_SECRET_ACCESS_KEY }}" >> "$GITHUB_OUTPUT"
+          echo "::add-mask::${{ secrets.AWS_ACCOUNT_ID }}"
+            echo "account-id=${{ secrets.AWS_ACCOUNT_ID }}" >> "$GITHUB_OUTPUT"
+          fi
       - name: Check out code
         uses: actions/checkout@v3
       - name: Mortar Deploy
         id: mortar-deploy
         uses: bucketplace/ci/.github/actions/mortar-deploy-action@latest
         with:
-          config: ${{ inputs.config }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ steps.aws-resolve.outputs.access-key-id }}
+          aws-secret-access-key: ${{ steps.aws-resolve.outputs.secret-access-key }}
           aws-region: ${{ inputs.aws-region }}
+          config: ${{ inputs.config }}
           create-ecr-repo: ${{ inputs.create-ecr-repo }}
           dry-run: ${{ inputs.dry-run }}
-          go-repo-s3-aws-access-id: ${{ secrets.GO_REPO_S3_AWS_ACCESS_ID }}
-          go-repo-s3-aws-secret-key: ${{ secrets.GO_REPO_S3_AWS_SECRET_KEY }}
+          go-repo-s3-aws-access-id: ${{ secrets.MGMT_AWS_ACCESS_KEY_ID }}
+          go-repo-s3-aws-secret-key: ${{ secrets.MGMT_AWS_SECRET_ACCESS_KEY }}
           nexus-user: ${{ secrets.NEXUS_DEPLOY_USERPASS }}
           nexus-url: ${{ inputs.nexus-url }}
+          ops-monster-token: ${{ secrets.MORTAR_OPSMONSTER_TOKEN }}
           override-version: ${{ inputs.override-version }}
           prod: ${{ inputs.prod }}
+          stub-only: ${{ inputs.stub-only }}
