@@ -120,7 +120,7 @@ jobs:
           yq w -i ${{ inputs.mortar-config }} version ${{ inputs.version }}
       - name: Mortar Deploy
         id: mortar-deploy
-        uses: ./.github/actions/mortar-deploy-action
+        uses: bucketplace/ci/.github/actions/mortar-deploy-action@latest
         with:
           aws-access-key-id: ${{ steps.aws.outputs.access_key_id }}
           aws-secret-access-key: ${{ steps.aws.outputs.secret_access_key }}
