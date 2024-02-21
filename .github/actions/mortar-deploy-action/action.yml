@@ -95,7 +95,7 @@ runs:
       shell: bash
     - name: Load Build Cache
       id: load-build-cache
-      uses: ./.github/actions/load-build-cache
+      uses: bucketplace/ci/.github/actions/load-build-cache@latest
       with:
         app-name: ${{ steps.extract-app-name.outputs.result }}
     - name: Mortar Deployment
@@ -123,6 +123,6 @@ runs:
       shell: bash
     - name: Store Build Cache
       id: store-build-cache
-      uses: ./.github/actions/store-build-cache
+      uses: bucketplace/ci/.github/actions/store-build-cache@latest
       with:
         app-name: ${{ steps.extract-app-name.outputs.result }}
