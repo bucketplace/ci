@@ -23,9 +23,10 @@ on:
         required: false
         default: false
       stub-only:
-        type: boolean
+        description: "deploy only a grpc stubs, not the packages or docker"
         required: false
-        default: false
+        type: string
+        default: "false"
     secrets:
       DEV_AWS_ACCESS_KEY_ID:
         required: true

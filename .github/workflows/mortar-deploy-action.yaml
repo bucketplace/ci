@@ -31,6 +31,11 @@ on:
         description: "mortar 버전 (JVM 17이상시 v2, 이하시 v1)"
         required: false
         default: "v2"
+      stub-only:
+        description: "deploy only a grpc stubs, not the packages or docker"
+        required: false
+        type: string
+        default: "false"
     secrets:
       DEV_AWS_ACCESS_KEY_ID:
         required: true
@@ -95,6 +100,7 @@ jobs:
       version: ${{ needs.get-updated-version.outputs.updated-version }}
       account-type: ${{ inputs.account-type }}
       skip-update-version: ${{ inputs.skip-update-version }}
+      stub-only: ${{ inputs.stub-only }}
     secrets: inherit
 
   trigger-cd:
