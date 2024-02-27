@@ -13,7 +13,7 @@ async function setup() {
     try {
         // Download the specific version of the tool, e.g. as a tarball/zipball
         // TODO: https://ohouse.atlassian.net/browse/COREPL-1482 get latest version
-        const pathToTarball = await tc.downloadTool('https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/1.6.2/mortar_Linux_x86_64.tar.gz');
+        const pathToTarball = await tc.downloadTool('https://nexus.co-workerhou.se/repository/raw-tool-releases/homebrew/platform/mortar/1.6.3/mortar_Linux_x86_64.tar.gz');
 
         // Extract the tarball onto the runner
         const pathToCLI = await tc.extractTar(pathToTarball);
@@ -30007,7 +30007,7 @@ module.exports = parseParams
 /************************************************************************/
 /******/ 	// The module cache
 /******/ 	var __webpack_module_cache__ = {};
-/******/ 	
+/******/
 /******/ 	// The require function
 /******/ 	function __nccwpck_require__(moduleId) {
 /******/ 		// Check if module is in cache
@@ -30021,7 +30021,7 @@ module.exports = parseParams
 /******/ 			// no module.loaded needed
 /******/ 			exports: {}
 /******/ 		};
-/******/ 	
+/******/
 /******/ 		// Execute the module function
 /******/ 		var threw = true;
 /******/ 		try {
@@ -30030,23 +30030,23 @@ module.exports = parseParams
 /******/ 		} finally {
 /******/ 			if(threw) delete __webpack_module_cache__[moduleId];
 /******/ 		}
-/******/ 	
+/******/
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/ 	
+/******/
 /************************************************************************/
 /******/ 	/* webpack/runtime/compat */
-/******/ 	
+/******/
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
-/******/ 	
+/******/
 /************************************************************************/
-/******/ 	
+/******/
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
 /******/ 	// This entry module is referenced by other modules so it can't be inlined
 /******/ 	var __webpack_exports__ = __nccwpck_require__(2667);
 /******/ 	module.exports = __webpack_exports__;
-/******/ 	
+/******/
 /******/ })()
 ;
