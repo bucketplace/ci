@@ -48,6 +48,11 @@ on:
         required: false
         default: ""
         type: string
+      use-large-runner:
+        description: "Specifies whether to use a large runner for the job"
+        required: false
+        default: false
+        type: boolean
     secrets:
       DOCKERHUB_USERNAME:
         description: "The Docker Hub username for logging in"
@@ -66,7 +71,7 @@ env:
 jobs:
   run-checks:
     name: Run checks and report
-    runs-on: [self-hosted, Linux, X64, cache, node-18]
+    runs-on: ${{ fromJSON(format('[self-hosted, Linux, X64, cache, node-18{0}]', inputs.use-large-runner == true && ', large' || '')) }}
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}
