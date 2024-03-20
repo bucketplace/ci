@@ -1,0 +1,28 @@
+name: "Setup Node.js"
+description: "Setup Node.js and a package manager for the project (See: https://www.notion.so/ohouse/Node-js-GitHub-Actions-b20b90da32e7444591f89b8a2274456c)"
+
+inputs:
+  nodejs-version:
+    description: "Specifies which Node.js version to use"
+    required: false
+    default: "18"
+  registry-url:
+    description: "Specifies the registry URL in which the package manager looks up for packages and publishes to"
+    required: false
+    default: "nexus.co-workerhou.se/repository/npm-private"
+
+runs:
+  using: composite
+  steps:
+    - name: Use Node.js v${{ inputs.nodejs-version }}
+      shell: bash
+      run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
+    - name: Configure registry
+      shell: bash
+      if: ${{ env.NPM_TOKEN != '' }}
+      run: |
+        cat <<EOF > "$HOME/.npmrc"
+          //${{ inputs.registry-url }}/:_authToken=$NPM_TOKEN
+        EOF
+      env:
+        NPM_TOKEN: ${{ env.NPM_TOKEN }}
