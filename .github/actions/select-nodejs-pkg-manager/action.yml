@@ -5,13 +5,11 @@ inputs:
   app-path:
     description: "Specifies a base directory to run the task from"
     required: false
-    default: '.'
-    type: string
+    default: "."
   package-manager:
     description: "Specifies which package manager to use"
     required: false
     default: ""
-    type: string
 
 outputs:
   bin:
