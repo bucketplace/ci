@@ -60,19 +60,17 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: ${{ inputs.branch }}
-      - name: Use Node.js ${{ inputs.nodejs-version }}
-        run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
-      - name: Configure registry
-        run: |
-          cat <<EOF > "$HOME/.npmrc"
-            //nexus.co-workerhou.se/repository/npm-private/:_authToken=$NPM_TOKEN
-          EOF
+      - name: Setup Node.js
+        uses: bucketplace/ci/.github/actions/setup-nodejs@latest
+        with:
+          nodejs-version: ${{ inputs.nodejs-version }}
         env:
-          NPM_TOKEN: ${{ secrets.NEXUS_NPM_TOKEN }}
-      - name: Determine which package manager to use
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Determine package manager
         id: pkg-manager
         uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
         with:
+          app-path: ${{ inputs.app-path }}
           package-manager: ${{ inputs.package-manager }}
       - name: Install dependencies
         run: ${{ steps.pkg-manager.outputs.install-cmd }}
