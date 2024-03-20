@@ -16,7 +16,9 @@ runs:
   steps:
     - name: Use Node.js v${{ inputs.nodejs-version }}
       shell: bash
-      run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
+      run: |
+        echo Using Node.js v${{ inputs.nodejs-version }}
+        echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
     - name: Configure registry
       shell: bash
       if: ${{ env.NPM_TOKEN != '' }}
