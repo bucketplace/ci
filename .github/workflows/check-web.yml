@@ -71,7 +71,7 @@ env:
 jobs:
   run-checks:
     name: Run checks and report
-    runs-on: ${{ fromJSON(format('[self-hosted, Linux, X64, cache, node-18{0}]', inputs.use-large-runner == true && ', large' || '')) }}
+    runs-on: ${{ fromJSON(format("['self-hosted', 'Linux', 'X64', 'cache', 'node-18'{0}]", inputs.use-large-runner == true && ", 'large'" || "")) }}
     defaults:
       run:
         working-directory: ${{ inputs.app-path }}
