@@ -65,7 +65,7 @@ jobs:
         with:
           nodejs-version: ${{ inputs.nodejs-version }}
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NEXUS_NPM_TOKEN }}
       - name: Determine package manager
         id: pkg-manager
         uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
