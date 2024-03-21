@@ -43,9 +43,13 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v3
-      - name: Use Node.js ${{ inputs.nodejs-version }}
-        run: echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
-      - name: Determine which package manager to use
+      - name: Setup Node.js
+        uses: bucketplace/ci/.github/actions/setup-nodejs@latest
+        with:
+          nodejs-version: ${{ inputs.nodejs-version }}
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Determine package manager
         id: pkg-manager
         uses: bucketplace/ci/.github/actions/select-nodejs-pkg-manager@latest
         with:
