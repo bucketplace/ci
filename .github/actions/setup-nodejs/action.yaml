@@ -2,6 +2,11 @@ name: "Setup Node.js"
 description: "Setup Node.js and a package manager for the project (See: https://www.notion.so/ohouse/Node-js-GitHub-Actions-b20b90da32e7444591f89b8a2274456c)"
 
 inputs:
+  app-path:
+    description: "Specifies a base directory to run the task from"
+    required: false
+    default: "."
+    type: string
   nodejs-version:
     description: "Specifies which Node.js version to use"
     required: false
@@ -18,6 +23,7 @@ runs:
       shell: bash
       run: |
         echo Using Node.js v${{ inputs.nodejs-version }}
+        cd ${{ inputs.app-path }}
         echo ${{ inputs.nodejs-version }} > .nvmrc && nvm use
     - name: Configure registry
       shell: bash
