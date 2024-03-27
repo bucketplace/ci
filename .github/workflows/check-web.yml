@@ -83,6 +83,7 @@ jobs:
       - name: Setup Node.js
         uses: bucketplace/ci/.github/actions/setup-nodejs@latest
         with:
+          app-path: ${{ inputs.app-path }}
           nodejs-version: ${{ inputs.nodejs-version }}
         env:
           NPM_TOKEN: ${{ secrets.NEXUS_NPM_TOKEN }}
